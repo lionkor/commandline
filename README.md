@@ -1,9 +1,9 @@
 # commandline
 [![CodeFactor](https://www.codefactor.io/repository/github/lionkor/commandline/badge)](https://www.codefactor.io/repository/github/lionkor/commandline)
 
-A C++ commandline for use in servers and chat software. Provides very simple asynchronous input/output.
+A C++ commandline for use in servers and terminal chat software. Provides very simple asynchronous input/output.
 
-Supports reading and writing at the same time, using VT100 ANSI escape codes. This means that, on windows, you need to enable those for your CMD terminal.
+Supports reading and writing at the same time, using VT100 ANSI escape codes. This means that, on windows, you need to [enable those for your CMD terminal](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences?redirectedfrom=MSDN).
 
 ## Example
 
@@ -25,6 +25,17 @@ int main() {
 **Result:**
 
 ![main.cpp demo gif](https://github.com/lionkor/commandline/blob/master/media/output.gif)
+
+## How to build
+
+Run `cmake`. 
+Then:
+- On Unix, this will generate a unix `Makefile`, which you can then run with `make`.
+- On Windows, this will generate a VS project which you can open.
+
+It should have then built the library, which you can link against.
+
+You could also put `add_subdirectory(commandline)` to your CMakeLists, if you clone the repo in the same folder. 
 
 ## How to use
 
