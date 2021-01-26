@@ -5,8 +5,24 @@ A C++ commandline for use in servers and chat software. Provides very simple asy
 
 Supports reading and writing at the same time, using VT100 ANSI escape codes. This means that, on windows, you need to enable those for your CMD terminal.
 
-For a good example, read `main.cpp`.
+## Example
 
+```cpp
+#include "commandline.h"
+
+int main() {
+    Commandline com;
+    while (true) {
+        if (com.has_command()) {
+            auto command = com.get_command();
+            com.write("got command: " + command);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        com.write("this is a message written with com.write");
+    }
+}
+```
+**Result:**
 ![main.cpp demo gif](https://github.com/lionkor/commandline/blob/master/media/output.gif)
 
 ## How to use
