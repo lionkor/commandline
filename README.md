@@ -23,6 +23,7 @@ int main() {
 }
 ```
 **Result:**
+
 ![main.cpp demo gif](https://github.com/lionkor/commandline/blob/master/media/output.gif)
 
 ## How to use
