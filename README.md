@@ -7,6 +7,8 @@ Supports reading and writing at the same time, using VT100 ANSI escape codes. Th
 
 For a good example, read `main.cpp`.
 
+![main.cpp demo gif](https://github.com/lionkor/commandline/blob/master/media/output.gif)
+
 ## How to use
 
 1. Construct a `Commandline` instance.
