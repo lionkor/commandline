@@ -4,6 +4,7 @@
 A C++ commandline for use in servers and terminal chat software. Provides very simple asynchronous input/output.
 
 Supports reading and writing at the same time, using VT100 ANSI escape codes. This means that, on windows, you need to [enable those for your CMD terminal](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences?redirectedfrom=MSDN).
+Has a history implementation, so you can enable history with `enable_history()`, and then navigate it with Esc[A (Up-Arrow) and Esc[B (Down-Arrow).
 
 ## Example
 
