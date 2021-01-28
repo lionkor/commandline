@@ -3,6 +3,7 @@
 #include <mutex>
 
 #if defined(__linux) || defined(__linux__)
+#include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
 #endif
