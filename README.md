@@ -30,7 +30,7 @@ int main() {
 
 ## How to build
 
-Run `cmake`. 
+Run `cmake . `. 
 Then:
 - On Unix, this will generate a unix `Makefile`, which you can then run with `make`.
 - On Windows, this will generate a VS project which you can open.
