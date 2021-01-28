@@ -53,27 +53,29 @@ static char getch_(bool echo) {
     reset_termios();
     return ch;
 }
-}
+} // namespace detail
 
 static char getchar_no_echo() {
     return detail::getch_(false);
 }
-#else // any other OS needs to supply either __linux, WIN32 or implement their own.
+#else // any other OS needs to #define either __linux or WIN32, or implement their own.
 #error "Please choose __linux or WIN32 implementation of `getchar_no_echo`, or implement your own"
 #endif // WIN32, __linux
 
+void Commandline::add_to_current_buffer(char c) {
+    m_current_buffer += c;
+    ++m_cursor_pos;
+    putchar(c);
+    m_history_temp_buffer = m_current_buffer;
+}
+
+void Commandline::update_current_buffer_view() {
+    printf("\x1b[2K\x1b[1000D%s", m_current_buffer.c_str());
+    fflush(stdout);
+}
+
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
-        auto add_to_str = [this](char c) {
-            m_current_buffer += c;
-            ++m_cursor_pos;
-            putchar(c);
-            m_history_temp_buffer = m_current_buffer;
-        };
-        auto update_view = [&] {
-            printf("\x1b[2K\x1b[1000D%s", m_current_buffer.c_str());
-            fflush(stdout);
-        };
         char c = 0;
         while (c != '\n' && !m_shutdown.load()) {
             c = getchar_no_echo();
@@ -82,10 +84,10 @@ void Commandline::input_thread_main() {
                 if (!m_current_buffer.empty()) {
                     --m_cursor_pos;
                     m_current_buffer.pop_back();
-                    update_view();
+                    update_current_buffer_view();
                 }
             } else if (isprint(c)) {
-                add_to_str(c);
+                add_to_current_buffer(c);
             } else if (c == 0x1b) { // escape sequence
                 char c2 = getchar_no_echo();
                 char c3 = getchar_no_echo();
@@ -98,7 +100,7 @@ void Commandline::input_thread_main() {
                         } else {
                             m_current_buffer = m_history.at(m_history_index);
                         }
-                        update_view();
+                        update_current_buffer_view();
                     } else if (c3 == 'B' && !m_history.empty()) {
                         go_forward_in_history();
                         std::lock_guard<std::mutex> guard_history(m_history_mutex);
@@ -107,11 +109,11 @@ void Commandline::input_thread_main() {
                         } else {
                             m_current_buffer = m_history.at(m_history_index);
                         }
-                        update_view();
+                        update_current_buffer_view();
                     }
                 } else {
-                    add_to_str(c2);
-                    add_to_str(c3);
+                    add_to_current_buffer(c2);
+                    add_to_current_buffer(c3);
                 }
             }
         }

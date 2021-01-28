@@ -9,7 +9,30 @@
 #include <vector>
 
 class Commandline final {
+public:
+    Commandline();
+    ~Commandline();
+
+    bool has_command() const;
+    void write(const std::string& str);
+    std::string get_command();
+    bool history_enabled() const { return m_history_enabled; }
+    void enable_history() { m_history_enabled = true; }
+    void disable_history() { m_history_enabled = false; }
+    void set_history_limit(size_t count);
+    size_t history_size() const;
+    void clear_history();
+
 private:
+    void io_thread_main();
+    void input_thread_main();
+
+    void add_to_history(const std::string& str);
+    void go_back_in_history();
+    void go_forward_in_history();
+    void add_to_current_buffer(char c);
+    void update_current_buffer_view();
+
     std::thread m_io_thread;
     std::atomic<bool> m_shutdown { false };
 
@@ -26,27 +49,6 @@ private:
     std::mutex m_current_buffer_mutex;
     std::string m_current_buffer;
     int m_cursor_pos = 0;
-
-    void io_thread_main();
-    void input_thread_main();
-
-    void add_to_history(const std::string& str);
-    void go_back_in_history();
-    void go_forward_in_history();
-
-public:
-    Commandline();
-    ~Commandline();
-
-    bool has_command() const;
-    void write(const std::string& str);
-    std::string get_command();
-    bool history_enabled() const { return m_history_enabled; }
-    void enable_history() { m_history_enabled = true; }
-    void disable_history() { m_history_enabled = false; }
-    void set_history_limit(size_t count);
-    size_t history_size() const;
-    void clear_history();
 };
 
 #endif // COMMANDLINE_H
