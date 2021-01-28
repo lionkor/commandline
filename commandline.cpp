@@ -167,6 +167,7 @@ void Commandline::io_thread_main() {
     i_thread.detach();
 #endif
     // after all this, we have to output all that remains in the buffer, so we dont "lose" information
+    std::lock_guard<std::mutex> guard(m_to_write_mutex);
     while (!m_to_write.empty()) {
         auto to_write = m_to_write.front();
         m_to_write.pop();
