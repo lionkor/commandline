@@ -21,10 +21,14 @@ private:
     mutable std::mutex m_history_mutex;
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;
-    size_t m_history_index;
+    size_t m_history_index { 0 };
     size_t m_history_limit = std::numeric_limits<size_t>::max() - 1;
+    std::mutex m_current_buffer_mutex;
+    std::string m_current_buffer;
+    int m_cursor_pos = 0;
 
     void io_thread_main();
+    void input_thread_main();
 
     void add_to_history(const std::string& str);
     void go_back_in_history();
