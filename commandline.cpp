@@ -137,6 +137,7 @@ void Commandline::input_thread_main() {
             m_to_read.push(m_current_buffer);
             m_current_buffer.clear();
             m_cursor_pos = 0;
+            update_current_buffer_view();
         }
     }
 }
@@ -146,9 +147,7 @@ void Commandline::io_thread_main() {
     while (!m_shutdown.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         std::lock_guard<std::mutex> guard(m_to_write_mutex);
-        if (m_to_write.empty()) {
-            continue;
-        } else {
+        if (!m_to_write.empty()) {
             auto to_write = m_to_write.front();
             m_to_write.pop();
             printf("\x1b[2K\x1b[1000D%s\n", to_write.c_str());
