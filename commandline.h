@@ -32,6 +32,8 @@ private:
     void go_forward_in_history();
     void add_to_current_buffer(char c);
     void update_current_buffer_view();
+    void handle_escape_sequence();
+    void handle_backspace();
 
     std::thread m_io_thread;
     std::atomic<bool> m_shutdown { false };

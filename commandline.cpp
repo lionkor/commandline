@@ -8,6 +8,8 @@
 #include <termios.h>
 #endif
 
+#include <iostream>
+
 Commandline::Commandline()
     : m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
 }
@@ -75,6 +77,43 @@ void Commandline::update_current_buffer_view() {
     fflush(stdout);
 }
 
+void Commandline::handle_escape_sequence() {
+    char c2 = getchar_no_echo();
+    char c3 = getchar_no_echo();
+    if (c2 == '[' && history_enabled()) {
+        if (c3 == 'A' && !m_history.empty()) {
+            go_back_in_history();
+            std::lock_guard<std::mutex> guard_history(m_history_mutex);
+            if (m_history_index == m_history.size()) {
+                m_current_buffer = m_history_temp_buffer;
+            } else {
+                m_current_buffer = m_history.at(m_history_index);
+            }
+            update_current_buffer_view();
+        } else if (c3 == 'B' && !m_history.empty()) {
+            go_forward_in_history();
+            std::lock_guard<std::mutex> guard_history(m_history_mutex);
+            if (m_history_index == m_history.size()) {
+                m_current_buffer = m_history_temp_buffer;
+            } else {
+                m_current_buffer = m_history.at(m_history_index);
+            }
+            update_current_buffer_view();
+        }
+    } else {
+        add_to_current_buffer(c2);
+        add_to_current_buffer(c3);
+    }
+}
+
+void Commandline::handle_backspace() {
+    if (!m_current_buffer.empty()) {
+        --m_cursor_pos;
+        m_current_buffer.pop_back();
+        update_current_buffer_view();
+    }
+}
+
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
         char c = 0;
@@ -82,47 +121,17 @@ void Commandline::input_thread_main() {
             c = getchar_no_echo();
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
             if (c == '\b' || c == 127) { // backspace or other delete sequence
-                if (!m_current_buffer.empty()) {
-                    --m_cursor_pos;
-                    m_current_buffer.pop_back();
-                    update_current_buffer_view();
-                }
+                handle_backspace();
             } else if (isprint(c)) {
                 add_to_current_buffer(c);
             } else if (c == 0x1b) { // escape sequence
-                char c2 = getchar_no_echo();
-                char c3 = getchar_no_echo();
-                if (c2 == '[' && history_enabled()) {
-                    if (c3 == 'A' && !m_history.empty()) {
-                        go_back_in_history();
-                        std::lock_guard<std::mutex> guard_history(m_history_mutex);
-                        if (m_history_index == m_history.size()) {
-                            m_current_buffer = m_history_temp_buffer;
-                        } else {
-                            m_current_buffer = m_history.at(m_history_index);
-                        }
-                        update_current_buffer_view();
-                    } else if (c3 == 'B' && !m_history.empty()) {
-                        go_forward_in_history();
-                        std::lock_guard<std::mutex> guard_history(m_history_mutex);
-                        if (m_history_index == m_history.size()) {
-                            m_current_buffer = m_history_temp_buffer;
-                        } else {
-                            m_current_buffer = m_history.at(m_history_index);
-                        }
-                        update_current_buffer_view();
-                    }
-                } else {
-                    add_to_current_buffer(c2);
-                    add_to_current_buffer(c3);
-                }
+                handle_escape_sequence();
             }
         }
         // check so we dont do anything on the last pass before exit
         if (!m_shutdown.load()) {
             if (history_enabled()) {
                 add_to_history(m_current_buffer);
-                m_history_temp_buffer.clear();
             }
             std::lock_guard<std::mutex> guard(m_to_read_mutex);
             m_to_read.push(m_current_buffer);
@@ -157,6 +166,13 @@ void Commandline::io_thread_main() {
     // .. on non-posix systems, we just detach it, until we find a better way to timeout the input in the input thread.
     i_thread.detach();
 #endif
+    // after all this, we have to output all that remains in the buffer, so we dont "lose" information
+    while (!m_to_write.empty()) {
+        auto to_write = m_to_write.front();
+        m_to_write.pop();
+        printf("\x1b[2K\x1b[1000D%s\n", to_write.c_str());
+    }
+    fflush(stdout);
 }
 
 void Commandline::add_to_history(const std::string& str) {
@@ -168,6 +184,7 @@ void Commandline::add_to_history(const std::string& str) {
     }
     m_history.push_back(str);
     m_history_index = m_history.size(); // point to one after last one
+    m_history_temp_buffer.clear();
 }
 
 void Commandline::go_back_in_history() {
