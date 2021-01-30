@@ -5,10 +5,14 @@ project(commandline)
 
 if(UNIX)
     add_definitions(-Wall -Wextra -pedantic -std=c++17 -pthread)
-endif()
+endif(UNIX)
 
 add_executable(test main.cpp)
 
 add_library(commandline commandline.cpp)
+if(UNIX)
+    target_link_libraries(commandline pthread)
+endif(UNIX)
 
-target_link_libraries(test commandline pthread)
+target_link_libraries(test commandline)
+
