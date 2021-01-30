@@ -45,13 +45,13 @@ You could also put `add_subdirectory(commandline)` to your CMakeLists, if you cl
 
 ## How to use
 
-1. Construct a `Commandline` instance.
+1. Construct a `Commandline` instance. A prompt can optionally be passed in this constructor, or via `set_prompt`.
 
 ```cpp
 Commandline com;
 ```
 
-2. Query for new commands in a loop - this should usually be your main server loop or something similar. A prompt can be passed in the constructor, or via `set_prompt`.
+2. Query for new commands in a loop - this should usually be your main server loop or something similar. 
 
 ```cpp
 bool is_running = true;
