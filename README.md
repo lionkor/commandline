@@ -1,5 +1,5 @@
 # commandline
-[![CodeFactor](https://www.codefactor.io/repository/github/lionkor/commandline/badge)](https://www.codefactor.io/repository/github/lionkor/commandline)
+[![CodeFactor](https://www.codefactor.io/repository/github/lionkor/commandline/badge)](https://www.codefactor.io/repository/github/lionkor/commandline) ![Linux Build](https://github.com/lionkor/commandline/workflows/CMake-Linux/badge.svg?branch=master) ![Windows Build](https://github.com/lionkor/commandline/workflows/CMake-Windows/badge.svg?branch=master)
 
 A C++ commandline for use in servers and terminal chat software. Provides very simple asynchronous input/output.
 
