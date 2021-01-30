@@ -1,7 +1,10 @@
 #include "commandline.h"
 
-int main() {
+int main(int argc, char** argv) {
     Commandline com;
+    if (argc > 1) {
+        com.set_prompt(argv[1]);
+    }
     com.enable_history();
     com.set_history_limit(5);
     while (true) {

@@ -13,8 +13,9 @@
 
 #include <iostream>
 
-Commandline::Commandline()
-    : m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
+Commandline::Commandline(const std::string& prompt)
+    : m_prompt(prompt)
+    , m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
 #if defined(WIN32)
     HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
@@ -26,7 +27,17 @@ Commandline::Commandline()
 
 Commandline::~Commandline() {
     m_shutdown.store(true);
-    m_io_thread.join();
+    if (m_io_thread.joinable()) {
+        m_io_thread.join();
+    }
+}
+
+void Commandline::set_prompt(const std::string& p) {
+    m_prompt = p;
+}
+
+std::string Commandline::prompt() const {
+    return m_prompt;
 }
 
 // we want to get a char without echoing it to the terminal and without buffering.
@@ -83,7 +94,7 @@ void Commandline::add_to_current_buffer(char c) {
 }
 
 void Commandline::update_current_buffer_view() {
-    printf("\x1b[2K\x1b[1000D%s", m_current_buffer.c_str());
+    printf("\x1b[2K\x1b[1000D%s%s", m_prompt.c_str(), m_current_buffer.c_str());
     fflush(stdout);
 }
 
@@ -128,6 +139,7 @@ void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
         char c = 0;
         while (c != '\n' && c != '\r' && !m_shutdown.load()) {
+            update_current_buffer_view();
             c = getchar_no_echo();
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
             if (c == '\b' || c == 127) { // backspace or other delete sequence
@@ -161,20 +173,12 @@ void Commandline::io_thread_main() {
             auto to_write = m_to_write.front();
             m_to_write.pop();
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
-            printf("\x1b[2K\x1b[1000D%s\n%s", to_write.c_str(), m_current_buffer.c_str());
+            printf("\x1b[2K\x1b[1000D%s\n%s%s", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str());
             fflush(stdout);
         } else {
         }
     }
-#if !defined(WIN32)
-    // on POSIX systems, we can cancel the pthread in order to terminate it gracefully
-    // without leaking resources
-    pthread_cancel(input_thread.native_handle());
-    input_thread.join();
-#else
-    // .. on non-posix systems, we just detach it, until we find a better way to timeout the input in the input thread.
     input_thread.detach();
-#endif
     // after all this, we have to output all that remains in the buffer, so we dont "lose" information
     std::lock_guard<std::mutex> guard(m_to_write_mutex);
     while (!m_to_write.empty()) {

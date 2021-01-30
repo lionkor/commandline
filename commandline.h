@@ -10,7 +10,7 @@
 
 class Commandline final {
 public:
-    Commandline();
+    explicit Commandline(const std::string& prompt = "");
     ~Commandline();
 
     bool has_command() const;
@@ -22,6 +22,8 @@ public:
     void set_history_limit(size_t count);
     size_t history_size() const;
     void clear_history();
+    void set_prompt(const std::string& p);
+    std::string prompt() const;
 
 private:
     void io_thread_main();
@@ -34,6 +36,8 @@ private:
     void update_current_buffer_view();
     void handle_escape_sequence();
     void handle_backspace();
+
+    std::string m_prompt;
 
     std::thread m_io_thread;
     std::atomic<bool> m_shutdown { false };
