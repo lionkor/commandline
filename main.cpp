@@ -12,7 +12,7 @@ int main() {
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         com.write("this is a message written with com.write");
     }
 }

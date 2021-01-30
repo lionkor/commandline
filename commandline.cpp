@@ -6,12 +6,22 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
+#else
+#include <conio.h>
+#include <windows.h>
 #endif
 
 #include <iostream>
 
 Commandline::Commandline()
     : m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
+#if defined(WIN32)
+    HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hConsole_c, &dwMode);
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hConsole_c, dwMode);
+#endif // WIN32
 }
 
 Commandline::~Commandline() {
@@ -117,7 +127,7 @@ void Commandline::handle_backspace() {
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
         char c = 0;
-        while (c != '\n' && !m_shutdown.load()) {
+        while (c != '\n' && c != '\r' && !m_shutdown.load()) {
             c = getchar_no_echo();
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
             if (c == '\b' || c == 127) { // backspace or other delete sequence
@@ -150,10 +160,10 @@ void Commandline::io_thread_main() {
         if (!m_to_write.empty()) {
             auto to_write = m_to_write.front();
             m_to_write.pop();
-            printf("\x1b[2K\x1b[1000D%s\n", to_write.c_str());
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
-            printf("%s", m_current_buffer.c_str());
+            printf("\x1b[2K\x1b[1000D%s\n%s", to_write.c_str(), m_current_buffer.c_str());
             fflush(stdout);
+        } else {
         }
     }
 #if !defined(WIN32)
@@ -163,7 +173,7 @@ void Commandline::io_thread_main() {
     input_thread.join();
 #else
     // .. on non-posix systems, we just detach it, until we find a better way to timeout the input in the input thread.
-    i_thread.detach();
+    input_thread.detach();
 #endif
     // after all this, we have to output all that remains in the buffer, so we dont "lose" information
     std::lock_guard<std::mutex> guard(m_to_write_mutex);
