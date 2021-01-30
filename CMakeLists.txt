@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 project(commandline)
 
-add_definitions(-Wall -Wextra -pedantic -std=c++17)
 
 if(UNIX)
-    add_definitions(-pthread)
+    add_definitions(-Wall -Wextra -pedantic -std=c++17 -pthread)
 endif()
 
 add_executable(test main.cpp)
