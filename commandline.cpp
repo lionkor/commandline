@@ -180,7 +180,7 @@ void Commandline::io_thread_main() {
     while (!m_to_write.empty()) {
         auto to_write = m_to_write.front();
         m_to_write.pop();
-        printf("\x1b[2K\x1b[1000D%s\n", to_write.c_str());
+        printf("\x1b[2K\x1b[1000D%s", to_write.c_str());
     }
     fflush(stdout);
 }
