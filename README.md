@@ -5,7 +5,9 @@ A C++ commandline for use in servers and terminal chat software. Provides very s
 
 Supports reading and writing at the same time, using VT100 ANSI escape codes. This means that, on windows, you need to [enable those for your CMD terminal](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences?redirectedfrom=MSDN).
 
-NEW: Has a history implementation, so you can enable history with `enable_history()`, and then navigate it with Esc\[A (Up-Arrow) and Esc\[B (Down-Arrow). You can set the history size with `set_history_size`, by default this is `std::numeric_limits<size_t>::max()`.
+Has a history implementation, so you can enable history with `enable_history()`, and then navigate it with Esc\[A (Up-Arrow) and Esc\[B (Down-Arrow). You can set the history size with `set_history_size`, by default this is `std::numeric_limits<size_t>::max()`.
+
+A prompt can be passed in the constructor, or via `set_prompt`.
 
 ## Example
 
@@ -47,7 +49,7 @@ You could also put `add_subdirectory(commandline)` to your CMakeLists, if you cl
 Commandline com;
 ```
 
-2. Query for new commands in a loop - this should usually be your main server loop or something similar.
+2. Query for new commands in a loop - this should usually be your main server loop or something similar. A prompt can be passed in the constructor, or via `set_prompt`.
 
 ```cpp
 bool is_running = true;
