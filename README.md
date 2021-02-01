@@ -1,5 +1,6 @@
 # commandline
-![Linux Build](https://github.com/lionkor/commandline/workflows/CMake-Linux/badge.svg?branch=master) ![Windows Build](https://github.com/lionkor/commandline/workflows/CMake-Windows/badge.svg?branch=master)
+[![Linux Build](https://github.com/lionkor/commandline/workflows/CMake-Linux/badge.svg?branch=master)](https://github.com/lionkor/commandline/actions?query=workflow%3ACMake-Linux)
+[![Windows Build](https://github.com/lionkor/commandline/workflows/CMake-Windows/badge.svg?branch=master)](https://github.com/lionkor/commandline/actions?query=workflow%3ACMake-Windows)
 
 [![CodeFactor](https://www.codefactor.io/repository/github/lionkor/commandline/badge)](https://www.codefactor.io/repository/github/lionkor/commandline)
 
