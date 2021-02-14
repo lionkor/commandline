@@ -150,8 +150,9 @@ void Commandline::input_thread_main() {
                 handle_escape_sequence();
             }
         }
+        bool shutdown = m_shutdown.load();
         // check so we dont do anything on the last pass before exit
-        if (!m_shutdown.load()) {
+        if (!shutdown) {
             if (history_enabled()) {
                 add_to_history(m_current_buffer);
             }
@@ -160,6 +161,9 @@ void Commandline::input_thread_main() {
             m_current_buffer.clear();
             m_cursor_pos = 0;
             update_current_buffer_view();
+        }
+        if (on_command && !shutdown) {
+            on_command(*this);
         }
     }
 }

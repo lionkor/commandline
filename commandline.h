@@ -2,6 +2,7 @@
 #define COMMANDLINE_H__
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -24,6 +25,9 @@ public:
     void clear_history();
     void set_prompt(const std::string& p);
     std::string prompt() const;
+
+    // gets called when a command is ready
+    std::function<void(Commandline&)> on_command { nullptr };
 
 private:
     void io_thread_main();
