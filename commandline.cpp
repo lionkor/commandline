@@ -179,6 +179,9 @@ void Commandline::io_thread_main() {
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
             printf("\x1b[2K\x1b[1000D%s\n%s%s", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str());
             fflush(stdout);
+            if (m_write_to_file) {
+                m_logfile << to_write << std::endl;
+            }
         } else {
         }
     }
@@ -189,9 +192,6 @@ void Commandline::io_thread_main() {
         auto to_write = m_to_write.front();
         m_to_write.pop();
         printf("\x1b[2K\x1b[1000D%s", to_write.c_str());
-        if (m_write_to_file) {
-            m_logfile.write(to_write.c_str(), to_write.size());
-        }
     }
     fflush(stdout);
 }
@@ -260,7 +260,7 @@ void Commandline::clear_history() {
 
 bool Commandline::enable_write_to_file(const std::filesystem::path& path) {
     m_logfile_path = path;
-    m_logfile.open(m_logfile_path);
+    m_logfile.open(m_logfile_path, std::ios::trunc | std::ios::out);
     if (!m_logfile.is_open() || !m_logfile.good()) {
         return false;
     }
