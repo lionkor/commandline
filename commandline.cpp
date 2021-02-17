@@ -189,6 +189,9 @@ void Commandline::io_thread_main() {
         auto to_write = m_to_write.front();
         m_to_write.pop();
         printf("\x1b[2K\x1b[1000D%s", to_write.c_str());
+        if (m_write_to_file) {
+            m_logfile.write(to_write.c_str(), to_write.size());
+        }
     }
     fflush(stdout);
 }
@@ -253,4 +256,14 @@ size_t Commandline::history_size() const {
 void Commandline::clear_history() {
     std::lock_guard<std::mutex> guard(m_history_mutex);
     m_history.clear();
+}
+
+bool Commandline::enable_write_to_file(const std::filesystem::path& path) {
+    m_logfile_path = path;
+    m_logfile.open(m_logfile_path);
+    if (!m_logfile.is_open() || !m_logfile.good()) {
+        return false;
+    }
+    m_write_to_file = true;
+    return true;
 }
