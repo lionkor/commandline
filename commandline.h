@@ -1,10 +1,17 @@
 #ifndef COMMANDLINE_H__
 #define COMMANDLINE_H__
 
+#ifdef WIN32
+// for windows, `max` may be defined which breaks
+// std::numeric_limits<T>::max()
+#undef max
+#endif
+
 #include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <mutex>
 #include <queue>
 #include <string>
