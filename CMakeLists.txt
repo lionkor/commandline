@@ -6,7 +6,7 @@ if(UNIX)
     add_definitions(-Wall -Wextra -pedantic -std=c++17 -pthread)
 endif(UNIX)
 if(MSVC)
-    add_definitions(/std:c++17 /permissive-)
+    add_definitions(/std:c++17 /permissive- /MD /WX /nologo /EHsc)
 endif(MSVC)
 
 add_executable(test main.cpp)
