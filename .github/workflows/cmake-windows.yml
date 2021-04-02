@@ -26,3 +26,9 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE
+    
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: BeamMP-Server.exe
+        path: ${{github.workspace}}/build/Release/test.exe
