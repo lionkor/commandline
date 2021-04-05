@@ -6,16 +6,18 @@ if(UNIX)
     add_definitions(-Wall -Wextra -pedantic -std=c++17 -pthread)
 endif(UNIX)
 if(MSVC)
-    add_definitions(/std:c++17 /permissive- /MD /WX /nologo /EHsc)
+    add_definitions(/std:c++17 /permissive-)
 endif(MSVC)
 
 add_executable(test main.cpp)
 
 add_library(commandline commandline.cpp)
 
-if(UNIX)
-    target_link_libraries(commandline pthread)
-endif(UNIX)
+if(COMMANDLINE_BUILD_TEST)
+    if(UNIX)
+        target_link_libraries(commandline pthread)
+    endif(UNIX)
 
-target_link_libraries(test commandline)
+    target_link_libraries(test commandline)
+endif(COMMANDLINE_BUILD_TEST)
 
