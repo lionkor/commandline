@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
+#include <unistd.h>
 #else
 #include <conio.h>
 #include <windows.h>
@@ -22,6 +23,8 @@ Commandline::Commandline(const std::string& prompt)
     GetConsoleMode(hConsole_c, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
+#elif defined(__linux) || defined(__linux__)
+    m_interactive = isatty(fileno(stdin));
 #endif // WIN32
 }
 
@@ -33,7 +36,8 @@ Commandline::~Commandline() {
 }
 
 void Commandline::set_prompt(const std::string& p) {
-    m_prompt = p;
+    if (m_interactive)
+        m_prompt = p;
 }
 
 std::string Commandline::prompt() const {
@@ -169,7 +173,10 @@ void Commandline::input_thread_main() {
 }
 
 void Commandline::io_thread_main() {
-    std::thread input_thread(&Commandline::input_thread_main, this);
+    if (m_interactive) {
+        std::thread input_thread(&Commandline::input_thread_main, this);
+        input_thread.detach();
+    }
     while (!m_shutdown.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         std::lock_guard<std::mutex> guard(m_to_write_mutex);
@@ -185,7 +192,6 @@ void Commandline::io_thread_main() {
         } else {
         }
     }
-    input_thread.detach();
     // after all this, we have to output all that remains in the buffer, so we dont "lose" information
     std::lock_guard<std::mutex> guard(m_to_write_mutex);
     while (!m_to_write.empty()) {

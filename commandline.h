@@ -57,6 +57,7 @@ private:
 
     std::thread m_io_thread;
     std::atomic<bool> m_shutdown { false };
+    bool m_interactive { true };
 
     mutable std::mutex m_to_write_mutex;
     std::queue<std::string> m_to_write;
