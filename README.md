@@ -10,7 +10,7 @@ Supports reading and writing at the same time, using VT100 ANSI escape codes. Th
 
 Has a history implementation, so you can enable history with `enable_history()`, and then navigate it with Esc\[A (Up-Arrow) and Esc\[B (Down-Arrow). You can set the history size with `set_history_size`, by default this is `std::numeric_limits<size_t>::max()`.
 
-A prompt can be passed in the constructor, or via `set_prompt`.
+A prompt can be passed in the `Commandline::Commandline` constructor, or via `set_prompt`.
 
 ## Example
 
