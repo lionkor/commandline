@@ -18,12 +18,14 @@ Commandline::Commandline(const std::string& prompt)
     : m_prompt(prompt)
     , m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
 #if defined(WIN32)
+#define WINDOWS
     HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     GetConsoleMode(hConsole_c, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
 #elif defined(__linux) || defined(__linux__)
+#define LINUX
     m_interactive = isatty(fileno(stdin));
 #endif // WIN32
 }
@@ -49,11 +51,11 @@ std::string Commandline::prompt() const {
 static char getchar_no_echo();
 
 // for windows, we use _getch
-#if defined(_WIN32)
+#if defined(WINDOWS)
 static char getchar_no_echo() {
     return _getch();
 }
-#elif defined(__linux) || defined(__linux__)
+#elif defined(LINUX)
 // for linux, we take care of non-echoing and non-buffered input with termios
 namespace detail {
 static struct termios s_old_termios, s_current_termios;
@@ -106,7 +108,12 @@ void Commandline::handle_escape_sequence() {
     char c2 = getchar_no_echo();
     char c3 = getchar_no_echo();
     if (c2 == '[' && history_enabled()) {
+#if defined(WINDOWS)
+        if (c3 == 'H' && !m_history.empty()) {
+#else
         if (c3 == 'A' && !m_history.empty()) {
+#endif
+            // up / back
             go_back_in_history();
             std::lock_guard<std::mutex> guard_history(m_history_mutex);
             if (m_history_index == m_history.size()) {
@@ -115,7 +122,12 @@ void Commandline::handle_escape_sequence() {
                 m_current_buffer = m_history.at(m_history_index);
             }
             update_current_buffer_view();
+#if defined(WINDOWS)
+        } else if (c3 == 'P' && !m_history.empty()) {
+#else
         } else if (c3 == 'B' && !m_history.empty()) {
+#endif
+            // down / forward
             go_forward_in_history();
             std::lock_guard<std::mutex> guard_history(m_history_mutex);
             if (m_history_index == m_history.size()) {
