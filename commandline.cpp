@@ -14,18 +14,24 @@
 
 #include <iostream>
 
+#if defined(WIN32)
+#define WINDOWS
+#elif defined(__linux) || defined(__linux__)
+#define LINUX
+#else
+#error "platform not supported"
+#endif
+
 Commandline::Commandline(const std::string& prompt)
     : m_prompt(prompt)
     , m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
-#if defined(WIN32)
-#define WINDOWS
+#if defined(WINDOWS)
     HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     GetConsoleMode(hConsole_c, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
-#elif defined(__linux) || defined(__linux__)
-#define LINUX
+#elif defined(LINUX)
     m_interactive = isatty(fileno(stdin));
 #endif // WIN32
 }
@@ -48,11 +54,11 @@ std::string Commandline::prompt() const {
 
 // we want to get a char without echoing it to the terminal and without buffering.
 // this is platform specific, so multiple different implementations are defined below.
-static char getchar_no_echo();
+static int getchar_no_echo();
 
 // for windows, we use _getch
 #if defined(WINDOWS)
-static char getchar_no_echo() {
+static int getchar_no_echo() {
     return _getch();
 }
 #elif defined(LINUX)
@@ -76,8 +82,8 @@ static void reset_termios() {
     tcsetattr(0, TCSANOW, &s_old_termios);
 }
 
-static char getch_(bool echo) {
-    char ch;
+static int getch_(bool echo) {
+    int ch;
     init_termios(echo);
     ch = getchar();
     reset_termios();
@@ -85,7 +91,7 @@ static char getch_(bool echo) {
 }
 } // namespace detail
 
-static char getchar_no_echo() {
+static int getchar_no_echo() {
     return detail::getch_(false);
 }
 #else // any other OS needs to #define either __linux or WIN32, or implement their own.
@@ -105,41 +111,50 @@ void Commandline::update_current_buffer_view() {
 }
 
 void Commandline::handle_escape_sequence() {
-    char c2 = getchar_no_echo();
-    char c3 = getchar_no_echo();
-    if (c2 == '[' && history_enabled()) {
-#if defined(WINDOWS)
-        if (c3 == 'H' && !m_history.empty()) {
-#else
-        if (c3 == 'A' && !m_history.empty()) {
-#endif
-            // up / back
-            go_back_in_history();
-            std::lock_guard<std::mutex> guard_history(m_history_mutex);
-            if (m_history_index == m_history.size()) {
-                m_current_buffer = m_history_temp_buffer;
-            } else {
-                m_current_buffer = m_history.at(m_history_index);
-            }
-            update_current_buffer_view();
-#if defined(WINDOWS)
-        } else if (c3 == 'P' && !m_history.empty()) {
-#else
-        } else if (c3 == 'B' && !m_history.empty()) {
-#endif
-            // down / forward
-            go_forward_in_history();
-            std::lock_guard<std::mutex> guard_history(m_history_mutex);
-            if (m_history_index == m_history.size()) {
-                m_current_buffer = m_history_temp_buffer;
-            } else {
-                m_current_buffer = m_history.at(m_history_index);
-            }
-            update_current_buffer_view();
+    int c2 = getchar_no_echo();
+    auto goback = [&] {
+        go_back_in_history();
+        std::lock_guard<std::mutex> guard_history(m_history_mutex);
+        if (m_history_index == m_history.size()) {
+            m_current_buffer = m_history_temp_buffer;
+        } else {
+            m_current_buffer = m_history.at(m_history_index);
         }
+        update_current_buffer_view();
+    };
+    auto goforward = [&] {
+        go_forward_in_history();
+        std::lock_guard<std::mutex> guard_history(m_history_mutex);
+        if (m_history_index == m_history.size()) {
+            m_current_buffer = m_history_temp_buffer;
+        } else {
+            m_current_buffer = m_history.at(m_history_index);
+        }
+        update_current_buffer_view();
+    };
+#if defined(LINUX)
+    int c3 = getchar_no_echo();
+    if (c2 == '[' && history_enabled()) {
+        if (c3 == 'A' && !m_history.empty()) {
+            // up / back
+            goback();
+        } else if (c3 == 'B' && !m_history.empty()) {
+            // down / forward
+            goforward();
+        }
+#elif defined(WINDOWS)
+    if (c2 == 'H' && !m_history.empty()) {
+        // up / back
+        goback();
+    } else if (c2 == 'P' && !m_history.empty()) {
+        // down / forward
+        goforward();
+#endif
     } else {
         add_to_current_buffer(c2);
+#if defined(LINUX)
         add_to_current_buffer(c3);
+#endif
     }
 }
 
@@ -153,7 +168,7 @@ void Commandline::handle_backspace() {
 
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
-        char c = 0;
+        int c = 0;
         while (c != '\n' && c != '\r' && !m_shutdown.load()) {
             update_current_buffer_view();
             c = getchar_no_echo();
@@ -162,7 +177,11 @@ void Commandline::input_thread_main() {
                 handle_backspace();
             } else if (isprint(c)) {
                 add_to_current_buffer(c);
+#if defined(LINUX)
             } else if (c == 0x1b) { // escape sequence
+#elif defined(WINDOWS)
+            } else if (c == 0xe0) { // escape sequence
+#endif
                 handle_escape_sequence();
             }
         }
