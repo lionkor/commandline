@@ -22,6 +22,17 @@
 #error "platform not supported"
 #endif
 
+#if defined(LINUX)
+static struct termios s_original_termios;
+#endif // LINUX
+static void atexit_reset_terminal() {
+#if defined(LINUX)
+    tcsetattr(0, TCSANOW, &s_original_termios);
+    std::puts("\n"); // obligatory newline
+#endif
+}
+static bool s_already_registered { false };
+
 Commandline::Commandline(const std::string& prompt)
     : m_prompt(prompt)
     , m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
@@ -33,7 +44,17 @@ Commandline::Commandline(const std::string& prompt)
     SetConsoleMode(hConsole_c, dwMode);
 #elif defined(LINUX)
     m_interactive = isatty(fileno(stdin));
+    tcgetattr(0, &s_original_termios);
 #endif // WIN32
+    if (!s_already_registered) {
+        s_already_registered = true;
+        const int res = std::atexit(atexit_reset_terminal);
+        if (res != 0) {
+            // ignore error
+            // we dont really care if this works - any place where this doesn't
+            // work likely won't profit from resetting termios anyways
+        }
+    }
 }
 
 Commandline::~Commandline() {
