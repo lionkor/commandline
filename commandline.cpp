@@ -2,7 +2,7 @@
 #include <functional>
 #include <mutex>
 
-#if defined(__linux) || defined(__linux__)
+#if defined(__linux) || defined(__linux__) || defined(__APPLE__)
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
@@ -16,7 +16,7 @@
 
 #if defined(WIN32)
 #define WINDOWS
-#elif defined(__linux) || defined(__linux__)
+#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
 #define LINUX
 #else
 #error "platform not supported"
