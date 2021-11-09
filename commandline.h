@@ -21,6 +21,7 @@
 class Commandline final {
 public:
     explicit Commandline(const std::string& prompt = "");
+    Commandline(const Commandline&) = delete;
     ~Commandline();
 
     bool has_command() const;

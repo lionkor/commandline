@@ -2,7 +2,7 @@
 #include <functional>
 #include <mutex>
 
-#if defined(__linux) || defined(__linux__) || defined(__APPLE__)
+#if defined(__linux) || defined(__linux__)
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
@@ -16,7 +16,7 @@
 
 #if defined(WIN32)
 #define WINDOWS
-#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux) || defined(__linux__)
 #define LINUX
 #else
 #error "platform not supported"
@@ -43,7 +43,7 @@ Commandline::Commandline(const std::string& prompt)
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
 #elif defined(LINUX)
-    m_interactive = isatty(fileno(stdin));
+    m_interactive = isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
     tcgetattr(0, &s_original_termios);
 #endif // WIN32
     if (!s_already_registered) {
