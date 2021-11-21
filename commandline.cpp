@@ -34,8 +34,7 @@ static void atexit_reset_terminal() {
 static bool s_already_registered { false };
 
 Commandline::Commandline(const std::string& prompt)
-    : m_prompt(prompt)
-    , m_io_thread(std::bind(&Commandline::io_thread_main, this)) {
+    : m_prompt(prompt) {
 #if defined(WINDOWS)
     HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
@@ -55,6 +54,7 @@ Commandline::Commandline(const std::string& prompt)
             // work likely won't profit from resetting termios anyways
         }
     }
+    m_io_thread = std::thread(std::bind(&Commandline::io_thread_main, this));
 }
 
 Commandline::~Commandline() {
