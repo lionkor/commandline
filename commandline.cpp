@@ -33,6 +33,10 @@ static void atexit_reset_terminal() {
 }
 static bool s_already_registered { false };
 
+static bool is_interactive() {
+    return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
+}
+
 Commandline::Commandline(const std::string& prompt)
     : m_prompt(prompt) {
 #if defined(WINDOWS)
@@ -42,7 +46,6 @@ Commandline::Commandline(const std::string& prompt)
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
 #elif defined(LINUX)
-    m_interactive = isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
     tcgetattr(0, &s_original_termios);
 #endif // WIN32
     if (!s_already_registered) {
@@ -189,8 +192,14 @@ void Commandline::handle_backspace() {
 
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
+        if (!is_interactive()) {
+            break;
+        }
         int c = 0;
         while (c != '\n' && c != '\r' && !m_shutdown.load()) {
+            if (!is_interactive()) {
+                break;
+            }
             update_current_buffer_view();
             c = getchar_no_echo();
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
@@ -225,7 +234,7 @@ void Commandline::input_thread_main() {
 }
 
 void Commandline::io_thread_main() {
-    if (m_interactive) {
+    if (is_interactive()) {
         std::thread input_thread(&Commandline::input_thread_main, this);
         input_thread.detach();
     }
