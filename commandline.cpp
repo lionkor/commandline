@@ -68,7 +68,7 @@ Commandline::~Commandline() {
 }
 
 void Commandline::set_prompt(const std::string& p) {
-    if (m_interactive)
+    if (is_interactive())
         m_prompt = p;
 }
 
