@@ -34,7 +34,10 @@ public:
     size_t history_size() const;
     void clear_history();
     const std::vector<std::string>& history() const { return m_history; }
-    void set_history(const std::vector<std::string>& history) { m_history = history; }
+    void set_history(const std::vector<std::string>& history) {
+        m_history = history;
+        m_history_index = 0;
+    }
     void set_prompt(const std::string& p);
     std::string prompt() const;
     bool write_to_file_enabled() const { return m_write_to_file; }
