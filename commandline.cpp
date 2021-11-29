@@ -34,7 +34,11 @@ static void atexit_reset_terminal() {
 static bool s_already_registered { false };
 
 static bool is_interactive() {
+#if defined(LINUX)
     return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
+#else
+    return true;
+#endif
 }
 
 Commandline::Commandline(const std::string& prompt)
