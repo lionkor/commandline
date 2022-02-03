@@ -44,6 +44,10 @@ public:
     [[nodiscard]] bool enable_write_to_file(const std::filesystem::path& path);
     void disable_write_to_file() { m_write_to_file = false; }
 
+    // key_debug writes escape-sequenced keys to stderr
+    void enable_key_debug();
+    void disable_key_debug();
+
     // gets called when a command is ready
     std::function<void(Commandline&)> on_command { nullptr };
 
@@ -63,6 +67,7 @@ private:
 
     std::thread m_io_thread;
     std::atomic<bool> m_shutdown { false };
+    bool m_key_debug { false };
 
     mutable std::mutex m_to_write_mutex;
     std::queue<std::string> m_to_write;

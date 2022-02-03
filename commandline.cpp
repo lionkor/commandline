@@ -140,6 +140,9 @@ void Commandline::update_current_buffer_view() {
 
 void Commandline::handle_escape_sequence() {
     int c2 = getchar_no_echo();
+    if (m_key_debug) {
+        fprintf(stderr, "0x%.2x\n", c2);
+    }
     auto goback = [&] {
         go_back_in_history();
         std::lock_guard<std::mutex> guard_history(m_history_mutex);
@@ -162,6 +165,9 @@ void Commandline::handle_escape_sequence() {
     };
 #if defined(LINUX)
     int c3 = getchar_no_echo();
+    if (m_key_debug) {
+        fprintf(stderr, "0x%.2x\n", c3);
+    }
     if (c2 == '[' && history_enabled()) {
         if (c3 == 'A' && !m_history.empty()) {
             // up / back
@@ -217,6 +223,10 @@ void Commandline::input_thread_main() {
             } else if (c == 0xe0) { // escape sequence
 #endif
                 handle_escape_sequence();
+            } else {
+                if (m_key_debug) {
+                    fprintf(stderr, "unhandled: 0x%.2x\n", c);
+                }
             }
         }
         bool shutdown = m_shutdown.load();
@@ -337,4 +347,12 @@ bool Commandline::enable_write_to_file(const std::filesystem::path& path) {
     }
     m_write_to_file = true;
     return true;
+}
+
+void Commandline::enable_key_debug() {
+    m_key_debug = true;
+}
+
+void Commandline::disable_key_debug() {
+    m_key_debug = false;
 }
