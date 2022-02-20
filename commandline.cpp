@@ -127,14 +127,15 @@ static int getchar_no_echo() {
 #endif // WIN32, __linux
 
 void Commandline::add_to_current_buffer(char c) {
-    m_current_buffer += c;
+    m_current_buffer.insert(m_cursor_pos, 1, c);
     ++m_cursor_pos;
-    putchar(c);
+    update_current_buffer_view();
     m_history_temp_buffer = m_current_buffer;
 }
 
 void Commandline::update_current_buffer_view() {
     printf("\x1b[2K\x1b[1000D%s%s", m_prompt.c_str(), m_current_buffer.c_str());
+    printf("\x1b[%luG", m_prompt.size() + m_cursor_pos+1);
     fflush(stdout);
 }
 
@@ -151,6 +152,7 @@ void Commandline::handle_escape_sequence() {
         } else {
             m_current_buffer = m_history.at(m_history_index);
         }
+        m_cursor_pos = m_current_buffer.size();
         update_current_buffer_view();
     };
     auto goforward = [&] {
@@ -161,8 +163,24 @@ void Commandline::handle_escape_sequence() {
         } else {
             m_current_buffer = m_history.at(m_history_index);
         }
+        m_cursor_pos = m_current_buffer.size();
         update_current_buffer_view();
     };
+
+    auto curleft = [&] {
+        if (m_cursor_pos>0 && !m_current_buffer.empty()) {
+            --m_cursor_pos;
+            update_current_buffer_view();
+        }
+    };
+
+    auto curright = [&] {
+        if (m_cursor_pos < m_current_buffer.size()) {
+            ++m_cursor_pos;
+            update_current_buffer_view();
+        }
+    };
+
 #if defined(LINUX)
     int c3 = getchar_no_echo();
     if (m_key_debug) {
@@ -175,6 +193,12 @@ void Commandline::handle_escape_sequence() {
         } else if (c3 == 'B' && !m_history.empty()) {
             // down / forward
             goforward();
+        } else if (c3 == 'D') {
+            // left
+            curleft();
+        } else if (c3 == 'C') {
+            // right
+            curright();
         }
 #elif defined(WINDOWS)
     if (c2 == 'H' && !m_history.empty()) {
@@ -183,6 +207,12 @@ void Commandline::handle_escape_sequence() {
     } else if (c2 == 'P' && !m_history.empty()) {
         // down / forward
         goforward();
+    } else if (c2 == 'K') {
+        // left
+        curleft();
+    } else if (c2 == 'M') {
+        // right
+        curright();
 #endif
     } else {
         add_to_current_buffer(c2);
@@ -194,8 +224,10 @@ void Commandline::handle_escape_sequence() {
 
 void Commandline::handle_backspace() {
     if (!m_current_buffer.empty()) {
-        --m_cursor_pos;
-        m_current_buffer.pop_back();
+        if (--m_cursor_pos < 0) {
+            m_cursor_pos = 0;
+        }
+        m_current_buffer.erase(m_cursor_pos, 1);
         update_current_buffer_view();
     }
 }
@@ -232,7 +264,7 @@ void Commandline::input_thread_main() {
         bool shutdown = m_shutdown.load();
         // check so we dont do anything on the last pass before exit
         if (!shutdown) {
-            if (history_enabled()) {
+            if (history_enabled() && m_current_buffer.size()>0) {
                 add_to_history(m_current_buffer);
             }
             std::lock_guard<std::mutex> guard(m_to_read_mutex);
