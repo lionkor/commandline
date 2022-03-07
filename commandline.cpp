@@ -134,7 +134,7 @@ void Commandline::add_to_current_buffer(char c) {
 }
 
 void Commandline::update_current_buffer_view() {
-    printf("\x1b[2K\x1b[1000D%s%s\x1b[%luG", m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+    printf("\x1b[2K\x1b[0G%s%s\x1b[%luG", m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
     fflush(stdout);
 }
 
@@ -318,7 +318,7 @@ void Commandline::io_thread_main() {
             auto to_write = m_to_write.front();
             m_to_write.pop();
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
-            printf("\x1b[2K\x1b[1000D%s\n%s%s\x1b[%luG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+            printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%luG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
             fflush(stdout);
             if (m_write_to_file) {
                 m_logfile << to_write << std::endl;
@@ -331,7 +331,7 @@ void Commandline::io_thread_main() {
     while (!m_to_write.empty()) {
         auto to_write = m_to_write.front();
         m_to_write.pop();
-        printf("\x1b[2K\x1b[1000D%s", to_write.c_str());
+        printf("\x1b[2K\x1b[0G%s", to_write.c_str());
     }
     fflush(stdout);
 }
