@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv) {
     Commandline com;
-    com.enable_key_debug();
+    // com.enable_key_debug();
     if (argc > 1) {
         com.set_prompt(argv[1]);
     }
