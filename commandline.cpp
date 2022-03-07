@@ -139,60 +139,70 @@ void Commandline::update_current_buffer_view() {
     fflush(stdout);
 }
 
+void Commandline::go_back() {
+    go_back_in_history();
+    std::lock_guard<std::mutex> guard_history(m_history_mutex);
+    if (m_history_index == m_history.size()) {
+        m_current_buffer = m_history_temp_buffer;
+    } else {
+        m_current_buffer = m_history.at(m_history_index);
+    }
+    m_cursor_pos = m_current_buffer.size();
+    update_current_buffer_view();
+}
+
+void Commandline::go_forward() {
+    go_forward_in_history();
+    std::lock_guard<std::mutex> guard_history(m_history_mutex);
+    if (m_history_index == m_history.size()) {
+        m_current_buffer = m_history_temp_buffer;
+    } else {
+        m_current_buffer = m_history.at(m_history_index);
+    }
+    m_cursor_pos = m_current_buffer.size();
+    update_current_buffer_view();
+}
+
+void Commandline::go_left() {
+    if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
+        --m_cursor_pos;
+        update_current_buffer_view();
+    }
+}
+
+void Commandline::go_right() {
+    if (size_t(m_cursor_pos) < m_current_buffer.size()) {
+        ++m_cursor_pos;
+        update_current_buffer_view();
+    }
+}
+
+void Commandline::go_to_begin() {
+    if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
+        m_cursor_pos = 0;
+        update_current_buffer_view();
+    }
+}
+
+void Commandline::go_to_end() {
+    if (size_t(m_cursor_pos) < m_current_buffer.size() && !m_current_buffer.empty()) {
+        m_cursor_pos = m_current_buffer.size();
+        update_current_buffer_view();
+    }
+}
+
 void Commandline::handle_escape_sequence() {
     int c2 = getchar_no_echo();
     if (m_key_debug) {
         fprintf(stderr, "0x%.2x\n", c2);
     }
-    auto goback = [&] {
-        go_back_in_history();
-        std::lock_guard<std::mutex> guard_history(m_history_mutex);
-        if (m_history_index == m_history.size()) {
-            m_current_buffer = m_history_temp_buffer;
-        } else {
-            m_current_buffer = m_history.at(m_history_index);
-        }
-        m_cursor_pos = m_current_buffer.size();
-        update_current_buffer_view();
-    };
-    auto goforward = [&] {
-        go_forward_in_history();
-        std::lock_guard<std::mutex> guard_history(m_history_mutex);
-        if (m_history_index == m_history.size()) {
-            m_current_buffer = m_history_temp_buffer;
-        } else {
-            m_current_buffer = m_history.at(m_history_index);
-        }
-        m_cursor_pos = m_current_buffer.size();
-        update_current_buffer_view();
-    };
-
-    auto curleft = [&] {
-        if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
-            --m_cursor_pos;
-            update_current_buffer_view();
-        }
-    };
 
     auto curhome = [&] {
-        if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
-            m_cursor_pos = 0;
-            update_current_buffer_view();
-        }
+
     };
 
     auto curend = [&] {
-        if (size_t(m_cursor_pos) < m_current_buffer.size() && !m_current_buffer.empty()) {
-            m_cursor_pos = m_current_buffer.size();
-            update_current_buffer_view();
-        }
-    };
 
-    auto curright = [&] {
-        if (m_cursor_pos < m_current_buffer.size()) {
-            ++m_cursor_pos;
-            update_current_buffer_view();
-        }
     };
 
 #if defined(LINUX)
@@ -203,42 +213,42 @@ void Commandline::handle_escape_sequence() {
     if (c2 == '[' && history_enabled()) {
         if (c3 == 'A' && !m_history.empty()) {
             // up / back
-            goback();
+            go_back();
         } else if (c3 == 'B' && !m_history.empty()) {
             // down / forward
-            goforward();
+            go_forward();
         } else if (c3 == 'D') {
             // left
-            curleft();
+            go_left();
         } else if (c3 == 'C') {
             // right
-            curright();
+            go_right();
         } else if (c3 == 0x48) {
             // HOME
-            curhome();
+            go_to_begin();
         } else if (c3 == 0x46) {
             // END
-            curend();
+            go_to_end();
         }
 #elif defined(WINDOWS)
     if (c2 == 'H' && !m_history.empty()) {
         // up / back
-        goback();
+        go_back();
     } else if (c2 == 'P' && !m_history.empty()) {
         // down / forward
-        goforward();
+        go_forward();
     } else if (c2 == 'K') {
         // left
-        curleft();
+        go_left();
     } else if (c2 == 'M') {
         // right
-        curright();
+        go_right();
     } else if (c2 == 0x47) {
         // HOME
-        curhome();
+        go_to_begin();
     } else if (c2 == 0x4f) {
         // END
-        curend();
+        go_to_end();
 #endif
     } else {
         add_to_current_buffer(c2);
