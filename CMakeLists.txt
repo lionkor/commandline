@@ -11,12 +11,14 @@ endif(MSVC)
 
 add_library(commandline commandline.cpp)
 
-if(COMMANDLINE_BUILD_TEST)
+option(BUILD_EXAMPLES "Build example program" ON)
+
+if(BUILD_EXAMPLES)
     add_executable(test main.cpp)
     if(UNIX)
         target_link_libraries(commandline pthread)
     endif(UNIX)
 
     target_link_libraries(test commandline)
-endif(COMMANDLINE_BUILD_TEST)
+endif()
 
