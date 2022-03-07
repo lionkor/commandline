@@ -62,6 +62,12 @@ private:
     void update_current_buffer_view();
     void handle_escape_sequence();
     void handle_backspace();
+    void go_back();
+    void go_forward();
+    void go_right();
+    void go_left();
+    void go_to_begin();
+    void go_to_end();
 
     std::string m_prompt;
 
