@@ -135,7 +135,7 @@ void Commandline::add_to_current_buffer(char c) {
 
 void Commandline::update_current_buffer_view() {
     printf("\x1b[2K\x1b[1000D%s%s", m_prompt.c_str(), m_current_buffer.c_str());
-    printf("\x1b[%luG", m_prompt.size() + m_cursor_pos+1);
+    printf("\x1b[%luG", m_prompt.size() + m_cursor_pos + 1);
     fflush(stdout);
 }
 
@@ -168,8 +168,22 @@ void Commandline::handle_escape_sequence() {
     };
 
     auto curleft = [&] {
-        if (m_cursor_pos>0 && !m_current_buffer.empty()) {
+        if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
             --m_cursor_pos;
+            update_current_buffer_view();
+        }
+    };
+
+    auto curhome = [&] {
+        if (m_cursor_pos > 0 && !m_current_buffer.empty()) {
+            m_cursor_pos = 0;
+            update_current_buffer_view();
+        }
+    };
+
+    auto curend = [&] {
+        if (size_t(m_cursor_pos) < m_current_buffer.size() && !m_current_buffer.empty()) {
+            m_cursor_pos = m_current_buffer.size();
             update_current_buffer_view();
         }
     };
@@ -199,6 +213,12 @@ void Commandline::handle_escape_sequence() {
         } else if (c3 == 'C') {
             // right
             curright();
+        } else if (c3 == 0x48) {
+            // HOME
+            curhome();
+        } else if (c3 == 0x46) {
+            // END
+            curend();
         }
 #elif defined(WINDOWS)
     if (c2 == 'H' && !m_history.empty()) {
@@ -213,6 +233,12 @@ void Commandline::handle_escape_sequence() {
     } else if (c2 == 'M') {
         // right
         curright();
+    } else if (c2 == 0x47) {
+        // HOME
+        curhome();
+    } else if (c2 == 0x4f) {
+        // END
+        curend();
 #endif
     } else {
         add_to_current_buffer(c2);
@@ -264,7 +290,7 @@ void Commandline::input_thread_main() {
         bool shutdown = m_shutdown.load();
         // check so we dont do anything on the last pass before exit
         if (!shutdown) {
-            if (history_enabled() && m_current_buffer.size()>0) {
+            if (history_enabled() && m_current_buffer.size() > 0) {
                 add_to_history(m_current_buffer);
             }
             std::lock_guard<std::mutex> guard(m_to_read_mutex);
@@ -292,6 +318,7 @@ void Commandline::io_thread_main() {
             m_to_write.pop();
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
             printf("\x1b[2K\x1b[1000D%s\n%s%s", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str());
+            printf("\x1b[%luG", m_prompt.size() + m_cursor_pos + 1);
             fflush(stdout);
             if (m_write_to_file) {
                 m_logfile << to_write << std::endl;
