@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <condition_variable>
 
 class Commandline final {
 public:
@@ -76,6 +77,7 @@ private:
 
     mutable std::mutex m_to_write_mutex;
     std::queue<std::string> m_to_write;
+    std::condition_variable m_to_write_cond;
     mutable std::mutex m_to_read_mutex;
     std::queue<std::string> m_to_read;
     bool m_history_enabled { false };

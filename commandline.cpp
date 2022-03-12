@@ -66,6 +66,7 @@ Commandline::Commandline(const std::string& prompt)
 
 Commandline::~Commandline() {
     m_shutdown.store(true);
+    m_to_write_cond.notify_one();
     if (m_io_thread.joinable()) {
         m_io_thread.join();
     }
@@ -312,8 +313,8 @@ void Commandline::io_thread_main() {
         input_thread.detach();
     }
     while (!m_shutdown.load()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        std::lock_guard<std::mutex> guard(m_to_write_mutex);
+        std::unique_lock<std::mutex> guard(m_to_write_mutex);
+	m_to_write_cond.wait(guard, [&] { return !m_to_write.empty() || m_shutdown.load(); });
         if (!m_to_write.empty()) {
             auto to_write = m_to_write.front();
             m_to_write.pop();
@@ -323,11 +324,10 @@ void Commandline::io_thread_main() {
             if (m_write_to_file) {
                 m_logfile << to_write << std::endl;
             }
-        } else {
         }
     }
     // after all this, we have to output all that remains in the buffer, so we dont "lose" information
-    std::lock_guard<std::mutex> guard(m_to_write_mutex);
+    std::unique_lock<std::mutex> guard(m_to_write_mutex);
     while (!m_to_write.empty()) {
         auto to_write = m_to_write.front();
         m_to_write.pop();
@@ -369,6 +369,7 @@ void Commandline::go_forward_in_history() {
 void Commandline::write(const std::string& str) {
     std::lock_guard<std::mutex> guard(m_to_write_mutex);
     m_to_write.push(str);
+    m_to_write_cond.notify_one();
 }
 
 bool Commandline::has_command() const {
