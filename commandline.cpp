@@ -398,7 +398,7 @@ void Commandline::clear_history() {
     m_history.clear();
 }
 
-bool Commandline::enable_write_to_file(const std::filesystem::path& path) {
+bool Commandline::enable_write_to_file(const std::string& path) {
     m_logfile_path = path;
     m_logfile.open(m_logfile_path, std::ios::trunc | std::ios::out);
     if (!m_logfile.is_open() || !m_logfile.good()) {

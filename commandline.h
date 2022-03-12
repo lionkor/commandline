@@ -8,7 +8,6 @@
 #endif
 
 #include <atomic>
-#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <limits>
@@ -41,7 +40,7 @@ public:
     void set_prompt(const std::string& p);
     std::string prompt() const;
     bool write_to_file_enabled() const { return m_write_to_file; }
-    [[nodiscard]] bool enable_write_to_file(const std::filesystem::path& path);
+    [[nodiscard]] bool enable_write_to_file(const std::string& path);
     void disable_write_to_file() { m_write_to_file = false; }
 
     // key_debug writes escape-sequenced keys to stderr
@@ -82,7 +81,7 @@ private:
     bool m_history_enabled { false };
     bool m_write_to_file { false };
     std::ofstream m_logfile;
-    std::filesystem::path m_logfile_path {};
+    std::string m_logfile_path {};
     mutable std::mutex m_history_mutex;
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;
