@@ -8,6 +8,7 @@
 #endif
 
 #include <atomic>
+#include <condition_variable>
 #include <fstream>
 #include <functional>
 #include <limits>
@@ -16,7 +17,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <condition_variable>
 
 class Commandline final {
 public:

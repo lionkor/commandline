@@ -16,9 +16,9 @@ int main(int argc, char** argv) {
                 break;
             }
         }
-	// this sleep is necessary in order to simulate a system load.
-	// usually, instead of writing a message here, a message would
-	// be written as the result of some internal program event.
+        // this sleep is necessary in order to simulate a system load.
+        // usually, instead of writing a message here, a message would
+        // be written as the result of some internal program event.
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         com.write("this is a message written with com.write");
     }

@@ -314,7 +314,7 @@ void Commandline::io_thread_main() {
     }
     while (!m_shutdown.load()) {
         std::unique_lock<std::mutex> guard(m_to_write_mutex);
-	m_to_write_cond.wait(guard, [&] { return !m_to_write.empty() || m_shutdown.load(); });
+        m_to_write_cond.wait(guard, [&] { return !m_to_write.empty() || m_shutdown.load(); });
         if (!m_to_write.empty()) {
             auto to_write = m_to_write.front();
             m_to_write.pop();
