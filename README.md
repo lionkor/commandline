@@ -5,7 +5,7 @@
 
 A cross-platfrom C++11 commandline for use in servers and terminal chat software. Provides very simple asynchronous input/output. 
 
-Callback-based i/o supported, as well as history, custom prompts, and more (see [features](#features))
+Callback-based i/o supported, as well as history, autocomplete, custom prompts, and more (see [features](#features))
 
 ## Example
 
