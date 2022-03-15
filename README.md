@@ -36,6 +36,9 @@ int main() {
 - Thread-safety:
 	All output is buffered internally and protected with mutexes, so `write()` can be called by many threads at the same time without issues. Performance-wise this makes little impact, in our testing, as compared to usual printf() or std::cout logging (it's much faster than the latter in common scenarios).
 
+- Tab Autocomplete:
+	A callback `on_autocomplete` makes it possible to build your own autocomplete.
+
 - History:
 	History of all commands entered is saved, if the history was enabled with `Commandline::enable_history()`. The history can be navigated like expected, with the up- and down-arrow keys, as well as cleared by the program, saved and restored, and more.
 
