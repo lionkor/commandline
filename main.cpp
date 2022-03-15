@@ -9,9 +9,14 @@ int main(int argc, char** argv) {
     com.enable_history();
     com.set_history_limit(5);
 
-    com.on_autocomplete = [](Commandline& com, std::string stub) {
-        //com.write(stub);
-        return std::vector<std::string>{"yo", "uwu"};
+    com.on_autocomplete = [](Commandline& com, std::string stub) -> std::vector<std::string> {
+        if (stub == "hello") {
+            return { "hello world" };
+        } else if (stub.empty()) {
+            return { "hello world", "exit" };
+        } else {
+            return {};
+        }
     };
 
     while (true) {
@@ -25,7 +30,7 @@ int main(int argc, char** argv) {
         // this sleep is necessary in order to simulate a system load.
         // usually, instead of writing a message here, a message would
         // be written as the result of some internal program event.
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        //com.write("this is a message written with com.write");
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        com.write("this is a message written with com.write");
     }
 }
