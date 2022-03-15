@@ -108,6 +108,12 @@ while (is_running) {
 com.write("hello, world!");
 ```
 
+## How to contribute?
+
+We roughly follow issue-driven development, as of v1.0.0. This means that any change you want to make should first be formulated in an issue. Then, it can be implemented on your own fork, and the issue referenced in the commit (like `fix #5`). Once PR'd and merged, it will automatically close the issue.
+
+Use the `.clang-format` and the `clang-format` tool to format your code before submitting.
+
 ## How does it work?
 
 To support reading and writing at the same time, it's using VT100 ANSI escape codes. This means that, on windows, you need to [enable those for your CMD terminal](https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences?redirectedfrom=MSDN).
