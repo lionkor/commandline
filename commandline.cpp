@@ -185,10 +185,35 @@ void Commandline::go_to_begin() {
 }
 
 void Commandline::go_to_end() {
-    if (size_t(m_cursor_pos) < m_current_buffer.size() && !m_current_buffer.empty()) {
+    if (!m_current_buffer.empty()) {
         m_cursor_pos = m_current_buffer.size();
         update_current_buffer_view();
     }
+}
+
+void Commandline::handle_tab() {
+    if (m_autocomplete_suggestions.empty()) { // make sure we have suggestions
+        if (on_autocomplete) { //request new ones if we dont
+            m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer);
+            m_autocomplete_index = 0;
+        }
+        if (m_autocomplete_suggestions.empty()) {
+            return;
+        }
+    } else {
+        if (++m_autocomplete_index >= m_autocomplete_suggestions.size()) {
+            m_autocomplete_index = 0;
+        }
+    }
+
+    //display current suggestion
+    m_current_buffer = m_autocomplete_suggestions.at(m_autocomplete_index);
+    Commandline::go_to_end();
+}
+
+void Commandline::clear_suggestions() {
+    m_autocomplete_suggestions.clear();
+    m_autocomplete_index = 0;
 }
 
 void Commandline::handle_escape_sequence() {
@@ -273,8 +298,13 @@ void Commandline::input_thread_main() {
             update_current_buffer_view();
             c = getchar_no_echo();
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
+            if (c != '\t') {
+                clear_suggestions();
+            }
             if (c == '\b' || c == 127) { // backspace or other delete sequence
                 handle_backspace();
+            } else if (c == '\t') {
+                handle_tab();
             } else if (isprint(c)) {
                 add_to_current_buffer(c);
 #if defined(LINUX)

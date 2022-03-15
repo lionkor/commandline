@@ -51,6 +51,9 @@ public:
     // gets called when a command is ready
     std::function<void(Commandline&)> on_command { nullptr };
 
+    // gets called when tab is pressed and new suggestions are requested
+    std::function<std::vector<std::string>(Commandline&, std::string)> on_autocomplete { nullptr };
+
 private:
     void io_thread_main();
     void input_thread_main();
@@ -62,6 +65,8 @@ private:
     void update_current_buffer_view();
     void handle_escape_sequence();
     void handle_backspace();
+    void handle_tab();
+    void clear_suggestions();
     void go_back();
     void go_forward();
     void go_right();
@@ -92,6 +97,8 @@ private:
     std::mutex m_current_buffer_mutex;
     std::string m_current_buffer;
     int m_cursor_pos = 0;
+    std::vector<std::string> m_autocomplete_suggestions;
+    size_t m_autocomplete_index = 0;
 };
 
 #endif // COMMANDLINE_H
