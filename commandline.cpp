@@ -192,23 +192,22 @@ void Commandline::go_to_end() {
 }
 
 void Commandline::handle_tab() {
-    if (m_autocomplete_suggestions.empty()) { // make sure we have suggestions
-        if (on_autocomplete) { //request new ones if we dont
+    if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
+        if (on_autocomplete) { // request new ones if we dont
             m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer);
             m_autocomplete_index = 0;
         }
         if (m_autocomplete_suggestions.empty()) {
             return;
         }
-    } else {
-        if (++m_autocomplete_index >= m_autocomplete_suggestions.size()) {
-            m_autocomplete_index = 0;
-        }
+    } else { // we already have suggestions, so tab will loop through them
+        ++m_autocomplete_index;
+        m_autocomplete_index %= m_autocomplete_suggestions.size();
     }
 
-    //display current suggestion
+    // display current suggestion
     m_current_buffer = m_autocomplete_suggestions.at(m_autocomplete_index);
-    Commandline::go_to_end();
+    go_to_end();
 }
 
 void Commandline::clear_suggestions() {
