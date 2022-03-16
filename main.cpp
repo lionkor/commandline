@@ -9,11 +9,12 @@ int main(int argc, char** argv) {
     com.enable_history();
     com.set_history_limit(5);
 
-    com.on_autocomplete = [](Commandline& com, std::string stub) -> std::vector<std::string> {
+    com.on_autocomplete = [](Commandline& com, std::string stub, int pos) -> std::vector<std::string> {
         if (stub == "hello") {
             return { "hello world" };
         } else if (stub.empty()) {
-            return { "hello world", "exit" };
+            return { "a", "b", "c", "d" };
+            //return { "hello world", "exit" };
         } else {
             return {};
         }
