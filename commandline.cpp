@@ -150,6 +150,9 @@ void Commandline::update_current_buffer_view() {
 }
 
 void Commandline::go_back() {
+    if (m_history.empty()) {
+        return;
+    }
     go_back_in_history();
     std::lock_guard<std::mutex> guard_history(m_history_mutex);
     if (m_history_index == m_history.size()) {
@@ -162,6 +165,9 @@ void Commandline::go_back() {
 }
 
 void Commandline::go_forward() {
+    if (m_history.empty()) {
+        return;
+    }
     go_forward_in_history();
     std::lock_guard<std::mutex> guard_history(m_history_mutex);
     if (m_history_index == m_history.size()) {
@@ -273,10 +279,10 @@ void Commandline::handle_escape_sequence() {
         fprintf(stderr, "c3: 0x%.2x\n", c3);
     }
     if (c2 == '[' && history_enabled()) {
-        if (c3 == 'A' && !m_history.empty()) {
+        if (c3 == 'A') {
             // up / back
             go_back();
-        } else if (c3 == 'B' && !m_history.empty()) {
+        } else if (c3 == 'B') {
             // down / forward
             go_forward();
         } else if (c3 == 'D') {
@@ -302,10 +308,10 @@ void Commandline::handle_escape_sequence() {
             handle_tab(false);
         }
 #elif defined(WINDOWS)
-    if (c2 == 'H' && !m_history.empty()) {
+    if (c2 == 'H') {
         // up / back
         go_back();
-    } else if (c2 == 'P' && !m_history.empty()) {
+    } else if (c2 == 'P') {
         // down / forward
         go_forward();
     } else if (c2 == 'K') {
