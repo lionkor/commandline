@@ -127,6 +127,15 @@ static int getchar_no_echo() {
 #error "Please choose __linux or WIN32 implementation of `getchar_no_echo`, or implement your own"
 #endif // WIN32, __linux
 
+#if defined(LINUX)
+bool is_key_in_buffer() {
+    struct timeval tv = { 0L, 100L };
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(0, &fds);
+    return select(1, &fds, NULL, NULL, &tv) > 0;
+}
+#endif
 void Commandline::add_to_current_buffer(char c) {
     m_current_buffer.insert(m_cursor_pos, 1, c);
     ++m_cursor_pos;
@@ -185,23 +194,26 @@ void Commandline::go_to_begin() {
 }
 
 void Commandline::go_to_end() {
-    if (!m_current_buffer.empty()) {
-        m_cursor_pos = m_current_buffer.size();
-        update_current_buffer_view();
-    }
+    m_cursor_pos = m_current_buffer.size();
+    update_current_buffer_view();
 }
 
-void Commandline::handle_tab() {
+void Commandline::handle_tab(bool forward) {
     if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
-        if (on_autocomplete) { // request new ones if we dont
-            m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer);
+        if (on_autocomplete) { // request new ones if we don't
+            m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer, m_cursor_pos);
             m_autocomplete_index = 0;
+            m_buffer_before_autocomplete = m_current_buffer;
         }
         if (m_autocomplete_suggestions.empty()) {
             return;
         }
     } else { // we already have suggestions, so tab will loop through them
-        ++m_autocomplete_index;
+        if (forward) {
+            ++m_autocomplete_index;
+        } else {
+            --m_autocomplete_index;
+        }
         m_autocomplete_index %= m_autocomplete_suggestions.size();
     }
 
@@ -215,16 +227,42 @@ void Commandline::clear_suggestions() {
     m_autocomplete_index = 0;
 }
 
+void Commandline::cancel_autocomplete_suggestion() {
+    if (!m_buffer_before_autocomplete.empty()) {
+        m_current_buffer = m_buffer_before_autocomplete;
+        m_buffer_before_autocomplete.clear();
+        clear_suggestions();
+        go_to_end();
+    }
+}
+
+void Commandline::handle_backspace() {
+    if (!m_current_buffer.empty()) {
+        if (--m_cursor_pos < 0) {
+            m_cursor_pos = 0;
+        }
+        m_current_buffer.erase(m_cursor_pos, 1);
+        update_current_buffer_view();
+    }
+}
+
+void Commandline::handle_delete() {
+    if (!m_current_buffer.empty() && m_cursor_pos < m_current_buffer.size()) {
+        m_current_buffer.erase(m_cursor_pos, 1);
+        update_current_buffer_view();
+    }
+}
+
 void Commandline::handle_escape_sequence() {
     int c2 = getchar_no_echo();
     if (m_key_debug) {
-        fprintf(stderr, "0x%.2x\n", c2);
+        fprintf(stderr, "c2: 0x%.2x\n", c2);
     }
 
 #if defined(LINUX)
     int c3 = getchar_no_echo();
     if (m_key_debug) {
-        fprintf(stderr, "0x%.2x\n", c3);
+        fprintf(stderr, "c3: 0x%.2x\n", c3);
     }
     if (c2 == '[' && history_enabled()) {
         if (c3 == 'A' && !m_history.empty()) {
@@ -239,12 +277,21 @@ void Commandline::handle_escape_sequence() {
         } else if (c3 == 'C') {
             // right
             go_right();
-        } else if (c3 == 0x48) {
+        } else if (c3 == 0x48 || c3 == 0x31) {
             // HOME
             go_to_begin();
         } else if (c3 == 0x46) {
             // END
             go_to_end();
+        } else if (c3 == 0x33) {
+            // DEL
+            int c4 = getchar_no_echo();
+            if (c4 == '~') {
+                handle_delete();
+            }
+        } else if (c3 == 0x5a) {
+            // SHIFT+TAB
+            handle_tab(false);
         }
 #elif defined(WINDOWS)
     if (c2 == 'H' && !m_history.empty()) {
@@ -265,22 +312,15 @@ void Commandline::handle_escape_sequence() {
     } else if (c2 == 0x4f) {
         // END
         go_to_end();
+    } else if (c2 == 0x53) {
+        // DEL
+        handle_delete();
 #endif
     } else {
         add_to_current_buffer(c2);
 #if defined(LINUX)
         add_to_current_buffer(c3);
 #endif
-    }
-}
-
-void Commandline::handle_backspace() {
-    if (!m_current_buffer.empty()) {
-        if (--m_cursor_pos < 0) {
-            m_cursor_pos = 0;
-        }
-        m_current_buffer.erase(m_cursor_pos, 1);
-        update_current_buffer_view();
     }
 }
 
@@ -296,22 +336,31 @@ void Commandline::input_thread_main() {
             }
             update_current_buffer_view();
             c = getchar_no_echo();
+            if (m_key_debug) {
+                fprintf(stderr, "c: 0x%.2x\n", c);
+            }
             std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
             if (c != '\t') {
-                clear_suggestions();
             }
             if (c == '\b' || c == 127) { // backspace or other delete sequence
                 handle_backspace();
+                clear_suggestions();
             } else if (c == '\t') {
-                handle_tab();
+                handle_tab(true);
             } else if (isprint(c)) {
                 add_to_current_buffer(c);
-#if defined(LINUX)
+                clear_suggestions();
             } else if (c == 0x1b) { // escape sequence
-#elif defined(WINDOWS)
-            } else if (c == 0xe0) { // escape sequence
+#if defined(LINUX)
+                if (true || is_key_in_buffer()) { //bypass broken function
+                    handle_escape_sequence();
+                } else
 #endif
+                    cancel_autocomplete_suggestion();
+            } else if (c == 0xe0) { // escape sequence
+#if defined(WINDOWS)
                 handle_escape_sequence();
+#endif
             } else {
                 if (m_key_debug) {
                     fprintf(stderr, "unhandled: 0x%.2x\n", c);
