@@ -63,10 +63,10 @@ private:
     void go_forward_in_history();
     void add_to_current_buffer(char c);
     void update_current_buffer_view();
-    void handle_escape_sequence();
+    void handle_escape_sequence(std::unique_lock<std::mutex>& guard);
     void handle_backspace();
     void handle_delete();
-    void handle_tab(bool forward);
+    void handle_tab(std::unique_lock<std::mutex>& guard, bool forward);
     void clear_suggestions();
     bool cancel_autocomplete_suggestion();
     void go_back();

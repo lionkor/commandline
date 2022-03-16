@@ -205,7 +205,7 @@ void Commandline::go_to_end() {
     update_current_buffer_view();
 }
 
-void Commandline::handle_tab(bool forward) {
+void Commandline::handle_tab(std::unique_lock<std::mutex>& guard, bool forward) {
     #if defined(WINDOWS)
     auto x = uint16_t(GetKeyState(VK_SHIFT));
     if (x > 1) {
@@ -215,7 +215,11 @@ void Commandline::handle_tab(bool forward) {
 
     if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
         if (on_autocomplete) { // request new ones if we don't
+            // we need to unlock the mutex here, because we call back into "userspace",
+            // which may want to print, which in turn then wants this mutex.
+            guard.unlock();
             m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer, m_cursor_pos);
+            guard.lock();
             m_autocomplete_index = 0;
             m_buffer_before_autocomplete = m_current_buffer;
         }
@@ -269,7 +273,7 @@ void Commandline::handle_delete() {
     }
 }
 
-void Commandline::handle_escape_sequence() {
+void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
     int c2 = getchar_no_echo();
     if (m_key_debug) {
         fprintf(stderr, "c2: 0x%.2x\n", c2);
@@ -307,7 +311,7 @@ void Commandline::handle_escape_sequence() {
             }
         } else if (c3 == 0x5a) {
             // SHIFT+TAB
-            handle_tab(false);
+            handle_tab(guard, false);
         }
 #elif defined(WINDOWS)
     if (c2 == 'H') {
@@ -355,27 +359,27 @@ void Commandline::input_thread_main() {
             if (m_key_debug) {
                 fprintf(stderr, "c: 0x%.2x\n", c);
             }
-            std::lock_guard<std::mutex> guard(m_current_buffer_mutex);
+            std::unique_lock<std::mutex> guard(m_current_buffer_mutex);
             if (c != '\t') {
             }
             if (c == '\b' || c == 127) { // backspace or other delete sequence
                 handle_backspace();
                 clear_suggestions();
             } else if (c == '\t') {
-                handle_tab(true);
+                handle_tab(guard, true);
             } else if (isprint(c)) {
                 add_to_current_buffer(c);
                 clear_suggestions();
             } else if (c == 0x1b) { // escape sequence
 #if defined(LINUX)
                 if (true || is_key_in_buffer()) { //bypass broken function
-                    handle_escape_sequence();
+                    handle_escape_sequence(guard);
                 } else
 #endif
                     cancel_autocomplete_suggestion();
             } else if (c == 0xe0) { // escape sequence
 #if defined(WINDOWS)
-                handle_escape_sequence();
+                handle_escape_sequence(guard);
 #endif
             } else {
                 if (m_key_debug) {
