@@ -245,17 +245,19 @@ void Commandline::clear_suggestions() {
     m_autocomplete_index = 0;
 }
 
-void Commandline::cancel_autocomplete_suggestion() {
+bool Commandline::cancel_autocomplete_suggestion() {
     if (!m_autocomplete_suggestions.empty()) {
         m_current_buffer = m_buffer_before_autocomplete;
         m_buffer_before_autocomplete.clear();
         clear_suggestions();
         go_to_end();
+        return true;
     }
+    return false;
 }
 
 void Commandline::handle_backspace() {
-    if (!m_current_buffer.empty()) {
+    if (!cancel_autocomplete_suggestion() && !m_current_buffer.empty()) {
         if (--m_cursor_pos < 0) {
             m_cursor_pos = 0;
         }
