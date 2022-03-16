@@ -10,6 +10,7 @@
 #else
 #include <conio.h>
 #include <windows.h>
+#include <array>
 #endif
 
 #include <iostream>
@@ -199,6 +200,13 @@ void Commandline::go_to_end() {
 }
 
 void Commandline::handle_tab(bool forward) {
+    #if defined(WINDOWS)
+    auto x = uint16_t(GetKeyState(VK_SHIFT));
+    if (x > 1) {
+        forward = false;
+    }
+    #endif
+
     if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
         if (on_autocomplete) { // request new ones if we don't
             m_autocomplete_suggestions = on_autocomplete(*this, m_current_buffer, m_cursor_pos);
@@ -228,7 +236,7 @@ void Commandline::clear_suggestions() {
 }
 
 void Commandline::cancel_autocomplete_suggestion() {
-    if (!m_buffer_before_autocomplete.empty()) {
+    if (!m_autocomplete_suggestions.empty()) {
         m_current_buffer = m_buffer_before_autocomplete;
         m_buffer_before_autocomplete.clear();
         clear_suggestions();
