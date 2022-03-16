@@ -68,7 +68,7 @@ private:
     void handle_delete();
     void handle_tab(bool forward);
     void clear_suggestions();
-    void cancel_autocomplete_suggestion();
+    bool cancel_autocomplete_suggestion();
     void go_back();
     void go_forward();
     void go_right();
