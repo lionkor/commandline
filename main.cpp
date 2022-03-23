@@ -14,7 +14,6 @@ int main(int argc, char** argv) {
             return { "hello world" };
         } else if (stub.empty()) {
             return { "a", "b", "c", "d" };
-            //return { "hello world", "exit" };
         } else {
             return {};
         }
