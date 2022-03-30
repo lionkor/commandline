@@ -9,7 +9,6 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <fstream>
 #include <functional>
 #include <limits>
 #include <mutex>
@@ -41,7 +40,7 @@ public:
     void set_prompt(const std::string& p);
     std::string prompt() const;
     bool write_to_file_enabled() const { return m_write_to_file; }
-    [[nodiscard]] bool enable_write_to_file(const std::string& path);
+    [[nodiscard]] bool enable_write_to_file();
     void disable_write_to_file() { m_write_to_file = false; }
 
     // key_debug writes escape-sequenced keys to stderr
@@ -53,6 +52,9 @@ public:
 
     // gets called when tab is pressed and new suggestions are requested
     std::function<std::vector<std::string>(Commandline&, std::string, int)> on_autocomplete { nullptr };
+
+    // Gets called if m_write_to_file is true
+    std::function<void(const std::string&)> on_write { nullptr };
 
 private:
     void io_thread_main();
@@ -89,8 +91,6 @@ private:
     std::queue<std::string> m_to_read;
     bool m_history_enabled { false };
     bool m_write_to_file { false };
-    std::ofstream m_logfile;
-    std::string m_logfile_path {};
     mutable std::mutex m_history_mutex;
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;

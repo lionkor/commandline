@@ -13,8 +13,6 @@
 #include <array>
 #endif
 
-#include <iostream>
-
 #if defined(WIN32)
 #define WINDOWS
 #elif defined(__linux) || defined(__linux__)
@@ -420,7 +418,7 @@ void Commandline::io_thread_main() {
             printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%luG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
             fflush(stdout);
             if (m_write_to_file) {
-                m_logfile << to_write << std::endl;
+                on_write(to_write);
             }
         }
     }
@@ -430,6 +428,9 @@ void Commandline::io_thread_main() {
         auto to_write = m_to_write.front();
         m_to_write.pop();
         printf("\x1b[2K\x1b[0G%s", to_write.c_str());
+        if (m_write_to_file) {
+            on_write(to_write);
+        }
     }
     fflush(stdout);
 }
@@ -497,10 +498,9 @@ void Commandline::clear_history() {
     m_history.clear();
 }
 
-bool Commandline::enable_write_to_file(const std::string& path) {
-    m_logfile_path = path;
-    m_logfile.open(m_logfile_path, std::ios::trunc | std::ios::out);
-    if (!m_logfile.is_open() || !m_logfile.good()) {
+bool Commandline::enable_write_to_file() {
+    if (on_write == nullptr)
+    {
         return false;
     }
     m_write_to_file = true;
