@@ -1,6 +1,11 @@
+#include <fstream>
 #include "commandline.h"
 
 int main(int argc, char** argv) {
+    // Fake logging as an example
+    std::ofstream log_file("log.txt");
+    std::mutex log_mutex;
+
     Commandline com;
     // com.enable_key_debug();
     if (argc > 1) {
@@ -19,6 +24,17 @@ int main(int argc, char** argv) {
         }
     };
 
+    com.on_write = [&log_file, &log_mutex](std::string string_to_be_logged) -> void {
+        std::lock_guard<std::mutex> guard(log_mutex);
+        log_file << string_to_be_logged << '\n';
+    };
+
+    if (com.enable_write_to_file() == false)
+    {
+        com.write("on_write() callback hasn't been defined!");
+    }
+
+    int counter = 0;
     while (true) {
         if (com.has_command()) {
             auto command = com.get_command();
@@ -31,6 +47,7 @@ int main(int argc, char** argv) {
         // usually, instead of writing a message here, a message would
         // be written as the result of some internal program event.
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        com.write("this is a message written with com.write");
+        com.write(std::to_string(counter) + ": this is a message written with com.write");
+        counter++;
     }
 }
