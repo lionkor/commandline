@@ -29,11 +29,6 @@ int main(int argc, char** argv) {
         log_file << string_to_be_logged << '\n';
     };
 
-    if (com.enable_write_to_file() == false)
-    {
-        com.write("on_write() callback hasn't been defined!");
-    }
-
     int counter = 0;
     while (true) {
         if (com.has_command()) {

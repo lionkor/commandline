@@ -417,7 +417,7 @@ void Commandline::io_thread_main() {
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
             printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%luG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
             fflush(stdout);
-            if (m_write_to_file) {
+            if (on_write) {
                 on_write(to_write);
             }
         }
@@ -428,7 +428,7 @@ void Commandline::io_thread_main() {
         auto to_write = m_to_write.front();
         m_to_write.pop();
         printf("\x1b[2K\x1b[0G%s", to_write.c_str());
-        if (m_write_to_file) {
+        if (on_write) {
             on_write(to_write);
         }
     }
@@ -496,15 +496,6 @@ size_t Commandline::history_size() const {
 void Commandline::clear_history() {
     std::lock_guard<std::mutex> guard(m_history_mutex);
     m_history.clear();
-}
-
-bool Commandline::enable_write_to_file() {
-    if (on_write == nullptr)
-    {
-        return false;
-    }
-    m_write_to_file = true;
-    return true;
 }
 
 void Commandline::enable_key_debug() {

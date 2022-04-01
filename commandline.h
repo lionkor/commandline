@@ -39,9 +39,6 @@ public:
     }
     void set_prompt(const std::string& p);
     std::string prompt() const;
-    bool write_to_file_enabled() const { return m_write_to_file; }
-    [[nodiscard]] bool enable_write_to_file();
-    void disable_write_to_file() { m_write_to_file = false; }
 
     // key_debug writes escape-sequenced keys to stderr
     void enable_key_debug();
