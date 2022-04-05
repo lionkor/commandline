@@ -50,7 +50,7 @@ public:
     // gets called when tab is pressed and new suggestions are requested
     std::function<std::vector<std::string>(Commandline&, std::string, int)> on_autocomplete { nullptr };
 
-    // Gets called if m_write_to_file is true
+    // gets called on write(), for writing to a file or similar secondary logging system
     std::function<void(const std::string&)> on_write { nullptr };
 
 private:
@@ -87,7 +87,6 @@ private:
     mutable std::mutex m_to_read_mutex;
     std::queue<std::string> m_to_read;
     bool m_history_enabled { false };
-    bool m_write_to_file { false };
     mutable std::mutex m_history_mutex;
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;

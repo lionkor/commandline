@@ -265,7 +265,7 @@ void Commandline::handle_backspace() {
 }
 
 void Commandline::handle_delete() {
-    if (!m_current_buffer.empty() && m_cursor_pos < m_current_buffer.size()) {
+    if (!m_current_buffer.empty() && m_cursor_pos < int(m_current_buffer.size())) {
         m_current_buffer.erase(m_cursor_pos, 1);
         update_current_buffer_view();
     }
