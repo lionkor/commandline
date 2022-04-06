@@ -22,5 +22,6 @@ option(BUILD_EXAMPLES "Build example program" ON)
 if(BUILD_EXAMPLES)
     add_executable(test main.cpp)
     target_link_libraries(test commandline)
+    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT test)
 endif()
 
