@@ -73,10 +73,6 @@ NOTE: To build the example from above (included in `main.cpp`), set `BUILD_EXAMP
 
 Because it's GPL licensed, which makes it difficult to integrate into more permissive licensed or closed-source / commercial projects. `commandline` aims to be usable by anyone, as long as MIT license terms are followed.
 
-### Why not support autocomplete?
-
-`commandline` will get (optional) autocomplete support in the future, it's being worked on.
-
 ## How to use
 
 1. Construct a `Commandline` instance. A prompt can optionally be passed in this constructor, or via `set_prompt`.
