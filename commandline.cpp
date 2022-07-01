@@ -2,7 +2,15 @@
 #include <functional>
 #include <mutex>
 
-#if defined(__linux) || defined(__linux__) || defined(__APPLE__)
+#if defined(WIN32)
+#define WINDOWS
+#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
+#define UNIX
+#else
+#error "platform not supported"
+#endif
+
+#if defined(UNIX)
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
@@ -11,14 +19,6 @@
 #include <conio.h>
 #include <windows.h>
 #include <array>
-#endif
-
-#if defined(WIN32)
-#define WINDOWS
-#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
-#define UNIX
-#else
-#error "platform not supported"
 #endif
 
 #if defined(UNIX)
