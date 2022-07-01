@@ -2,7 +2,7 @@
 #include <functional>
 #include <mutex>
 
-#if defined(__linux) || defined(__linux__)
+#if defined(__linux) || defined(__linux__) || defined(__APPLE__)
 #include <pthread.h>
 #include <stdio.h>
 #include <termios.h>
@@ -15,17 +15,17 @@
 
 #if defined(WIN32)
 #define WINDOWS
-#elif defined(__linux) || defined(__linux__)
-#define LINUX
+#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
+#define UNIX
 #else
 #error "platform not supported"
 #endif
 
-#if defined(LINUX)
+#if defined(UNIX)
 static struct termios s_original_termios;
-#endif // LINUX
+#endif // UNIX
 static void atexit_reset_terminal() {
-#if defined(LINUX)
+#if defined(UNIX)
     tcsetattr(0, TCSANOW, &s_original_termios);
     std::puts("\n"); // obligatory newline
 #endif
@@ -33,7 +33,7 @@ static void atexit_reset_terminal() {
 static bool s_already_registered { false };
 
 static bool is_interactive() {
-#if defined(LINUX)
+#if defined(UNIX)
     return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
 #else
     return true;
@@ -48,7 +48,7 @@ Commandline::Commandline(const std::string& prompt)
     GetConsoleMode(hConsole_c, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hConsole_c, dwMode);
-#elif defined(LINUX)
+#elif defined(UNIX)
     tcgetattr(0, &s_original_termios);
 #endif // WIN32
     if (!s_already_registered) {
@@ -89,7 +89,7 @@ static int getchar_no_echo();
 static int getchar_no_echo() {
     return _getch();
 }
-#elif defined(LINUX)
+#elif defined(UNIX)
 // for linux, we take care of non-echoing and non-buffered input with termios
 namespace detail {
 static struct termios s_old_termios, s_current_termios;
@@ -126,7 +126,7 @@ static int getchar_no_echo() {
 #error "Please choose __linux or WIN32 implementation of `getchar_no_echo`, or implement your own"
 #endif // WIN32, __linux
 
-#if defined(LINUX)
+#if defined(UNIX)
 bool is_key_in_buffer() {
     struct timeval tv = { 0L, 100L };
     fd_set fds;
@@ -277,7 +277,7 @@ void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
         fprintf(stderr, "c2: 0x%.2x\n", c2);
     }
 
-#if defined(LINUX)
+#if defined(UNIX)
     int c3 = getchar_no_echo();
     if (m_key_debug) {
         fprintf(stderr, "c3: 0x%.2x\n", c3);
@@ -336,7 +336,7 @@ void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
 #endif
     } else {
         add_to_current_buffer(c2);
-#if defined(LINUX)
+#if defined(UNIX)
         add_to_current_buffer(c3);
 #endif
     }
@@ -369,7 +369,7 @@ void Commandline::input_thread_main() {
                 add_to_current_buffer(c);
                 clear_suggestions();
             } else if (c == 0x1b) { // escape sequence
-#if defined(LINUX)
+#if defined(UNIX)
                 if (true || is_key_in_buffer()) { //bypass broken function
                     handle_escape_sequence(guard);
                 } else
