@@ -13,12 +13,13 @@
 #if defined(UNIX)
 #include <pthread.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
 #else
+#include <array>
 #include <conio.h>
 #include <windows.h>
-#include <array>
 #endif
 
 #if defined(UNIX)
@@ -204,12 +205,12 @@ void Commandline::go_to_end() {
 }
 
 void Commandline::handle_tab(std::unique_lock<std::mutex>& guard, bool forward) {
-    #if defined(WINDOWS)
+#if defined(WINDOWS)
     auto x = uint16_t(GetKeyState(VK_SHIFT));
     if (x > 1) {
         forward = false;
     }
-    #endif
+#endif
 
     if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
         if (on_autocomplete) { // request new ones if we don't
@@ -370,7 +371,7 @@ void Commandline::input_thread_main() {
                 clear_suggestions();
             } else if (c == 0x1b) { // escape sequence
 #if defined(UNIX)
-                if (true || is_key_in_buffer()) { //bypass broken function
+                if (true || is_key_in_buffer()) { // bypass broken function
                     handle_escape_sequence(guard);
                 } else
 #endif
