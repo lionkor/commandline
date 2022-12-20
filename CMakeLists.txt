@@ -20,8 +20,8 @@ target_include_directories(commandline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 option(BUILD_EXAMPLES "Build example program" ON)
 
 if(BUILD_EXAMPLES)
-    add_executable(test main.cpp)
-    target_link_libraries(test commandline)
-    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT test)
+    add_executable(commandline_test main.cpp)
+    target_link_libraries(commandline_test commandline)
+    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT commandline_test)
 endif()
 
