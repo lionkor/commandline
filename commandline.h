@@ -1,12 +1,6 @@
 #ifndef COMMANDLINE_H__
 #define COMMANDLINE_H__
 
-#ifdef WIN32
-// for windows, `max` may be defined which breaks
-// std::numeric_limits<T>::max()
-#undef max
-#endif
-
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -91,7 +85,7 @@ private:
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;
     size_t m_history_index { 0 };
-    size_t m_history_limit = std::numeric_limits<size_t>::max() - 1;
+    size_t m_history_limit = (std::numeric_limits<size_t>::max)() - 1;
     std::mutex m_current_buffer_mutex;
     std::string m_current_buffer;
     int m_cursor_pos = 0;
