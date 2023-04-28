@@ -23,14 +23,12 @@
 #if defined(UNIX)
 static struct termios s_original_termios;
 #endif // UNIX
-static void atexit_reset_terminal() {
+static void reset_terminal() {
 #if defined(UNIX)
     tcsetattr(0, TCSANOW, &s_original_termios);
     std::puts("\n"); // obligatory newline
 #endif
 }
-static bool s_already_registered { false };
-
 static bool is_interactive() {
 #if defined(UNIX)
     return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
@@ -50,15 +48,6 @@ Commandline::Commandline(const std::string& prompt)
 #elif defined(UNIX)
     tcgetattr(0, &s_original_termios);
 #endif // WIN32
-    if (!s_already_registered) {
-        s_already_registered = true;
-        const int res = std::atexit(atexit_reset_terminal);
-        if (res != 0) {
-            // ignore error
-            // we dont really care if this works - any place where this doesn't
-            // work likely won't profit from resetting termios anyways
-        }
-    }
     m_io_thread = std::thread(&Commandline::io_thread_main, this);
 }
 
@@ -68,6 +57,7 @@ Commandline::~Commandline() {
     if (m_io_thread.joinable()) {
         m_io_thread.join();
     }
+    reset_terminal();
 }
 
 void Commandline::set_prompt(const std::string& p) {
