@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <pthread.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -57,6 +58,16 @@ int impl::getchar_no_echo() {
 
 bool impl::is_shift_pressed(bool forward) {
     return forward;
+}
+
+int impl::get_terminal_width() {
+    struct winsize w;
+    int ret = ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    if (ret == -1) {
+        return 80; // some sane default
+    } else {
+        return w.ws_col;
+    }
 }
 
 #endif

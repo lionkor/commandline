@@ -32,4 +32,14 @@ bool impl::is_shift_pressed(bool forward) {
     return forward;
 }
 
+int impl::get_terminal_width() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int ret = GetConsoleScreenBufferInfo(GetStdHandle( STD_OUTPUT_HANDLE ),&csbi);
+    if (ret) {
+        return csbi.dwSize.Y;
+    } else {
+        return 80; // some sane default
+    }
+}
+
 #endif

@@ -6,6 +6,7 @@ void init_terminal();
 void reset_terminal();
 int getchar_no_echo();
 bool is_shift_pressed(bool forward);
+int get_terminal_width();
 }
 
 #if defined(PLATFORM_WINDOWS) && PLATFORM_WINDOWS
