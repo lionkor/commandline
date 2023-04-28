@@ -1,64 +1,10 @@
 #include "commandline.h"
 
-#if defined(_WIN32)
-#define WINDOWS
-#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
-#define UNIX
-#else
-#error "platform not supported"
-#endif
-
-#if defined(UNIX)
-#include <pthread.h>
-#include <stdio.h>
-#include <sys/time.h>
-#include <termios.h>
-#include <unistd.h>
-#else
-#include <array>
-#include <conio.h>
-#include <windows.h>
-#endif
-
-#if defined(UNIX)
-static struct termios s_original_termios;
-#endif // UNIX
-static void atexit_reset_terminal() {
-#if defined(UNIX)
-    tcsetattr(0, TCSANOW, &s_original_termios);
-    std::puts("\n"); // obligatory newline
-#endif
-}
-static bool s_already_registered { false };
-
-static bool is_interactive() {
-#if defined(UNIX)
-    return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
-#else
-    return true;
-#endif
-}
+#include "impls.h"
 
 Commandline::Commandline(const std::string& prompt)
     : m_prompt(prompt) {
-#if defined(WINDOWS)
-    HANDLE hConsole_c = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD dwMode = 0;
-    GetConsoleMode(hConsole_c, &dwMode);
-    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    SetConsoleMode(hConsole_c, dwMode);
-#elif defined(UNIX)
-    tcgetattr(0, &s_original_termios);
-#endif // WIN32
-    if (!s_already_registered) {
-        s_already_registered = true;
-        const int res = std::atexit(atexit_reset_terminal);
-        if (res != 0) {
-            // ignore error
-            // we dont really care if this works - any place where this doesn't
-            // work likely won't profit from resetting termios anyways
-        }
-    }
+    impl::init_terminal();
     m_io_thread = std::thread(&Commandline::io_thread_main, this);
 }
 
@@ -66,10 +12,11 @@ Commandline::~Commandline() {
     m_shutdown.store(true);
     m_to_write_cond.notify_one();
     m_io_thread.join();
+    impl::reset_terminal();
 }
 
 void Commandline::set_prompt(const std::string& p) {
-    if (is_interactive())
+    if (impl::is_interactive())
         m_prompt = p;
 }
 
@@ -77,61 +24,6 @@ std::string Commandline::prompt() const {
     return m_prompt;
 }
 
-// we want to get a char without echoing it to the terminal and without buffering.
-// this is platform specific, so multiple different implementations are defined below.
-static int getchar_no_echo();
-
-// for windows, we use _getch
-#if defined(WINDOWS)
-static int getchar_no_echo() {
-    return _getch();
-}
-#elif defined(UNIX)
-// for linux, we take care of non-echoing and non-buffered input with termios
-namespace detail {
-static struct termios s_old_termios, s_current_termios;
-
-static void init_termios(bool echo) {
-    tcgetattr(0, &s_old_termios);
-    s_current_termios = s_old_termios;
-    s_current_termios.c_lflag &= ~ICANON;
-    if (echo) {
-        s_current_termios.c_lflag |= ECHO;
-    } else {
-        s_current_termios.c_lflag &= ~ECHO;
-    }
-    tcsetattr(0, TCSANOW, &s_current_termios);
-}
-
-static void reset_termios() {
-    tcsetattr(0, TCSANOW, &s_old_termios);
-}
-
-static int getch_(bool echo) {
-    int ch;
-    init_termios(echo);
-    ch = getchar();
-    reset_termios();
-    return ch;
-}
-} // namespace detail
-
-static int getchar_no_echo() {
-    return detail::getch_(false);
-}
-#else // any other OS needs to #define either __linux or WIN32, or implement their own.
-#error "Please choose __linux or WIN32 implementation of `getchar_no_echo`, or implement your own"
-#endif // WIN32, __linux
-
-#if defined(UNIX)
-bool is_key_in_buffer() {
-    struct timeval tv = { 0L, 100L };
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(0, &fds);
-    return select(1, &fds, NULL, NULL, &tv) > 0;
-}
-#endif
 void Commandline::add_to_current_buffer(char c) {
     m_current_buffer.insert(m_cursor_pos, 1, c);
     ++m_cursor_pos;
@@ -201,12 +93,7 @@ void Commandline::go_to_end() {
 }
 
 void Commandline::handle_tab(std::unique_lock<std::mutex>& guard, bool forward) {
-#if defined(WINDOWS)
-    auto x = uint16_t(GetKeyState(VK_SHIFT));
-    if (x > 1) {
-        forward = false;
-    }
-#endif
+    forward = impl::is_shift_pressed(forward);
 
     if (m_autocomplete_suggestions.empty()) { // ensure we don't have suggestions already
         if (on_autocomplete) { // request new ones if we don't
@@ -269,13 +156,13 @@ void Commandline::handle_delete() {
 }
 
 void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
-    int c2 = getchar_no_echo();
+    int c2 = impl::getchar_no_echo();
     if (m_key_debug) {
         fprintf(stderr, "c2: 0x%.2x\n", c2);
     }
 
 #if defined(UNIX)
-    int c3 = getchar_no_echo();
+    int c3 = impl::getchar_no_echo();
     if (m_key_debug) {
         fprintf(stderr, "c3: 0x%.2x\n", c3);
     }
@@ -300,7 +187,7 @@ void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
             go_to_end();
         } else if (c3 == 0x33) {
             // DEL
-            int c4 = getchar_no_echo();
+            int c4 = impl::getchar_no_echo();
             if (c4 == '~') {
                 handle_delete();
             }
@@ -341,16 +228,16 @@ void Commandline::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
 
 void Commandline::input_thread_main() {
     while (!m_shutdown.load()) {
-        if (!is_interactive()) {
+        if (!impl::is_interactive()) {
             break;
         }
         int c = 0;
         while (c != '\n' && c != '\r' && !m_shutdown.load()) {
-            if (!is_interactive()) {
+            if (!impl::is_interactive()) {
                 break;
             }
             update_current_buffer_view();
-            c = getchar_no_echo();
+            c = impl::getchar_no_echo();
             if (m_key_debug) {
                 fprintf(stderr, "c: 0x%.2x\n", c);
             }
@@ -367,11 +254,10 @@ void Commandline::input_thread_main() {
                 clear_suggestions();
             } else if (c == 0x1b) { // escape sequence
 #if defined(UNIX)
-                if (true || is_key_in_buffer()) { // bypass broken function
-                    handle_escape_sequence(guard);
-                } else
+                handle_escape_sequence(guard);
+#else
+                cancel_autocomplete_suggestion();
 #endif
-                    cancel_autocomplete_suggestion();
             } else if (c == 0xe0) { // escape sequence
 #if defined(WINDOWS)
                 handle_escape_sequence(guard);
@@ -401,7 +287,7 @@ void Commandline::input_thread_main() {
 }
 
 void Commandline::io_thread_main() {
-    if (is_interactive()) {
+    if (impl::is_interactive()) {
         std::thread input_thread(&Commandline::input_thread_main, this);
         input_thread.detach();
     }
