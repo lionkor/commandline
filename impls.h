@@ -13,5 +13,5 @@ bool is_shift_pressed(bool forward);
 #elif defined(PLATFORM_LINUX) && PLATFORM_LINUX
 #define UNIX
 #else
-#error "define PLATFORM_LINUX=1 or PLATFORM_WINDOWS=1
+#error "define PLATFORM_LINUX=1 or PLATFORM_WINDOWS=1"
 #endif
