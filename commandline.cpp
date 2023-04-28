@@ -65,9 +65,7 @@ Commandline::Commandline(const std::string& prompt)
 Commandline::~Commandline() {
     m_shutdown.store(true);
     m_to_write_cond.notify_one();
-    if (m_io_thread.joinable()) {
-        m_io_thread.join();
-    }
+    m_io_thread.join();
 }
 
 void Commandline::set_prompt(const std::string& p) {
