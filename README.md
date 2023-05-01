@@ -54,7 +54,13 @@ int main() {
 - Cross-platform:
 	Works on any POSIX system with a terminal that supports ANSI (all of the ones you can find, probably), as well as WinAPI console applications and Microsoft CMD.
 
-## How to build
+## Installation
+
+### Vcpkg
+
+For [vcpkg](https://github.com/microsoft/vcpkg) users there is a `lionkor-commandline` [port](https://github.com/microsoft/vcpkg/tree/master/ports/lionkor-commandline) that can be installed via `vcpkg install lionkor-commandline` or by adding it to `dependencies` section of your `vcpkg.json` file.
+
+### Building from source
 
 Run `cmake . `. 
 Then:
