@@ -62,6 +62,7 @@ private:
     void go_to_begin();
     void go_to_end();
 
+    size_t current_view_size();
     size_t current_view_offset();
     std::string current_view();
     size_t current_view_cursor_pos();

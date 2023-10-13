@@ -400,10 +400,22 @@ std::string lk::InteractiveBackend::current_view() {
 }
 
 size_t lk::InteractiveBackend::current_view_cursor_pos() {
-    return m_prompt.size() + m_cursor_pos + 1;
+    const auto w = impl::get_terminal_width();
+    const auto content_space = w - m_prompt.size();
+    if (m_current_buffer.size() <= content_space) {
+        return m_cursor_pos + m_prompt.size() + 1;
+    }
+    const auto view_size = current_view_size();
+    return m_cursor_pos + m_prompt.size() - current_view_offset() + 2;
 }
+
 size_t lk::InteractiveBackend::current_view_offset() {
+    const auto view_size = current_view_size();
+    const auto cursor = (m_cursor_pos / view_size);
+    return m_current_buffer.size() - (view_size);
+}
+size_t lk::InteractiveBackend::current_view_size() {
     const auto w = impl::get_terminal_width() - m_prompt.size() - 1;
-    const auto content_space = (w / 2);
-    return (m_current_buffer.size() / content_space) * (w / 2) - (w / 2);
+    const auto view_size = size_t(double(w) * 1) - 1;
+    return view_size;
 }
