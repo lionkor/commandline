@@ -48,11 +48,8 @@ int main() {
 - `has_command()` and `get_command()`, or `on_command` callback:
 	All these are supported as ways to get a line that was entered by the user, allowing many ways to integrate the library into existing applications.
 
-- Output to file:
-	Supports specifying a file to write all output into, as a logging mechanism!
-
 - Cross-platform:
-	Works on any POSIX system with a terminal that supports ANSI (all of the ones you can find, probably), as well as WinAPI console applications and Microsoft CMD.
+	Works on any POSIX system with a terminal that supports ANSI (all of the ones you can find, probably), as well as WinAPI console applications and Microsoft CMD, and MacOS.
 
 ## Installation
 
