@@ -75,7 +75,7 @@ NOTE: To build the example from above (included in `main.cpp`), set `BUILD_EXAMP
 
 ## Why not X?
 
-### Why not GNU getline?
+### Why not GNU readline?
 
 Because it's GPL licensed, which makes it difficult to integrate into more permissive licensed or closed-source / commercial projects. `commandline` aims to be usable by anyone, as long as MIT license terms are followed.
 
