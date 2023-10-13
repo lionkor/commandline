@@ -74,6 +74,10 @@ You could also put `add_subdirectory(commandline)` to your CMakeLists, if you cl
 
 Because it's GPL licensed, which makes it difficult to integrate into more permissive licensed or closed-source / commercial projects. `commandline` aims to be usable by anyone, as long as MIT license terms are followed.
 
+### Why not curses/ncurses?
+
+They're TUI frameworks, this is much less than a TUI. They're also C, which is less handy for C++ projects.
+
 ## How to use
 
 1. Construct a `Commandline` instance. A prompt can optionally be passed in this constructor, or via `set_prompt`.
