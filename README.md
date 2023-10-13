@@ -59,16 +59,14 @@ For [vcpkg](https://github.com/microsoft/vcpkg) users there is a `lionkor-comman
 
 ### Building from source
 
-Run `cmake . `. 
-Then:
-- On Unix, this will generate a unix `Makefile`, which you can then run with `make`.
-- On Windows, this will generate a VS project which you can open.
+1. Install `cmake` and a compiler of your choice (on Windows you want Visual Studio (not Visual Studio Code), on Linux either gcc, clang or some other compiler, and on MacOS clang / "apple clang").
+2. Clone this repository somewhere.
+3. Run `cmake . -B bin` in the cloned repository, with any options you'd like (e.g. `-DCMAKE_BUILD_TYPE=Release` for a release build).
+4. Run `cmake --build bin --parallel` to build the library and tests.
 
 It should have then built the library, which you can link against.
 
-You could also put `add_subdirectory(commandline)` to your CMakeLists, if you clone the repo in the same folder. 
-
-NOTE: To build the example from above (included in `main.cpp`), set `BUILD_EXAMPLES` to `ON` in your CMake configuration.
+You could also put `add_subdirectory(commandline)` to your CMakeLists, if you clone the repo in the folder such that `commandline` is a subfolder to your `CMakeLists.txt`.
 
 ## Why not X?
 
