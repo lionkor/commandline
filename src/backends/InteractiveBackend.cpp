@@ -33,7 +33,7 @@ void lk::InteractiveBackend::add_to_current_buffer(char c) {
 }
 
 void lk::InteractiveBackend::update_current_buffer_view() {
-    printf("\x1b[2K\x1b[0G%s%s\x1b[%zuG", m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+    printf("\x1b[2K\x1b[0G%s%s\x1b[%zuG", m_prompt.c_str(), current_view().c_str(), current_view_cursor_pos());
     fflush(stdout);
 }
 
@@ -299,7 +299,7 @@ void lk::InteractiveBackend::io_thread_main() {
             auto to_write = m_to_write.front();
             m_to_write.pop();
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
-            printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%zuG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+            printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%zuG", to_write.c_str(), m_prompt.c_str(), current_view().c_str(), current_view_cursor_pos());
             fflush(stdout);
             if (on_write) {
                 on_write(to_write);
@@ -388,4 +388,22 @@ void lk::InteractiveBackend::enable_key_debug() {
 
 void lk::InteractiveBackend::disable_key_debug() {
     m_key_debug = false;
+}
+std::string lk::InteractiveBackend::current_view() {
+    const auto w = impl::get_terminal_width();
+    const auto content_space = w - m_prompt.size();
+    std::string buffer = m_current_buffer;
+    if (buffer.size() > content_space) {
+        buffer = "\x1b[7m<\x1b[0m" + buffer.substr(current_view_offset());
+    }
+    return buffer;
+}
+
+size_t lk::InteractiveBackend::current_view_cursor_pos() {
+    return m_prompt.size() + m_cursor_pos + 1;
+}
+size_t lk::InteractiveBackend::current_view_offset() {
+    const auto w = impl::get_terminal_width() - m_prompt.size() - 1;
+    const auto content_space = (w / 2);
+    return (m_current_buffer.size() / content_space) * (w / 2) - (w / 2);
 }

@@ -62,6 +62,10 @@ private:
     void go_to_begin();
     void go_to_end();
 
+    size_t current_view_offset();
+    std::string current_view();
+    size_t current_view_cursor_pos();
+
     std::string m_prompt;
 
     std::thread m_io_thread;
