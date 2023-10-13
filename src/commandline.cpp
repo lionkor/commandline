@@ -13,7 +13,7 @@ Commandline::Commandline(const std::string& prompt) {
     } else {
         m_backend = std::unique_ptr<lk::Backend>(new lk::BufferedBackend(prompt));
     }
-    m_backend->on_command = [this](lk::Backend& be) {
+    m_backend->on_command = [this](lk::Backend&) {
         if (on_command) {
             on_command(*this);
         }
@@ -23,7 +23,7 @@ Commandline::Commandline(const std::string& prompt) {
             on_write(str);
         }
     };
-    m_backend->on_autocomplete = [this](lk::Backend& be, std::string str, int n) {
+    m_backend->on_autocomplete = [this](lk::Backend&, std::string str, int n) {
         if (on_autocomplete) {
             return on_autocomplete(*this, std::move(str), n);
         } else {
