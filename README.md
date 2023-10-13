@@ -48,11 +48,8 @@ int main() {
 - `has_command()` and `get_command()`, or `on_command` callback:
 	All these are supported as ways to get a line that was entered by the user, allowing many ways to integrate the library into existing applications.
 
-- Output to file:
-	Supports specifying a file to write all output into, as a logging mechanism!
-
 - Cross-platform:
-	Works on any POSIX system with a terminal that supports ANSI (all of the ones you can find, probably), as well as WinAPI console applications and Microsoft CMD.
+	Works on any POSIX system with a terminal that supports ANSI (all of the ones you can find, probably), as well as WinAPI console applications and Microsoft CMD, and MacOS.
 
 ## Installation
 
@@ -62,22 +59,24 @@ For [vcpkg](https://github.com/microsoft/vcpkg) users there is a `lionkor-comman
 
 ### Building from source
 
-Run `cmake . `. 
-Then:
-- On Unix, this will generate a unix `Makefile`, which you can then run with `make`.
-- On Windows, this will generate a VS project which you can open.
+1. Install `cmake` and a compiler of your choice (on Windows you want Visual Studio (not Visual Studio Code), on Linux either gcc, clang or some other compiler, and on MacOS clang / "apple clang").
+2. Clone this repository somewhere.
+3. Run `cmake . -B bin` in the cloned repository, with any options you'd like (e.g. `-DCMAKE_BUILD_TYPE=Release` for a release build).
+4. Run `cmake --build bin --parallel` to build the library and tests.
 
 It should have then built the library, which you can link against.
 
-You could also put `add_subdirectory(commandline)` to your CMakeLists, if you clone the repo in the same folder. 
-
-NOTE: To build the example from above (included in `main.cpp`), set `BUILD_EXAMPLES` to `ON` in your CMake configuration.
+You could also put `add_subdirectory(commandline)` to your CMakeLists, if you clone the repo in the folder such that `commandline` is a subfolder to your `CMakeLists.txt`.
 
 ## Why not X?
 
-### Why not GNU getline?
+### Why not GNU readline?
 
 Because it's GPL licensed, which makes it difficult to integrate into more permissive licensed or closed-source / commercial projects. `commandline` aims to be usable by anyone, as long as MIT license terms are followed.
+
+### Why not curses/ncurses?
+
+They're TUI frameworks, this is much less than a TUI. They're also C, which is less handy for C++ projects.
 
 ## How to use
 
