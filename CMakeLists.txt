@@ -4,12 +4,12 @@ project(commandline)
 
 set(CMAKE_CXX_STANDARD 11)
 
-if(UNIX)
+if (UNIX)
     add_definitions(-Wall -Wextra -pedantic)
-endif(UNIX)
-if(MSVC)
+endif (UNIX)
+if (MSVC)
     add_definitions(/permissive-)
-endif(MSVC)
+endif (MSVC)
 
 include(FindThreads)
 
@@ -20,27 +20,35 @@ if (WIN32)
     set(COMMANDLINE_PLATFORM_WINDOWS 1)
 elseif (LINUX OR APPLE OR CYGWIN OR UNIX) # just check a bunch even if they may repeat
     set(COMMANDLINE_PLATFORM_LINUX 1)
-endif()
+endif ()
 
-add_library(commandline commandline.cpp impls.h windows_impl.cpp linux_impl.cpp)
+add_library(commandline src/impls.h windows_impl.cpp src/linux_impl.cpp
+        src/backends/InteractiveBackend.cpp
+        src/backends/InteractiveBackend.h
+        src/backends/Backend.cpp
+        src/backends/Backend.h
+        src/commandline.h
+        src/commandline.cpp
+        src/backends/BufferedBackend.cpp
+        src/backends/BufferedBackend.h)
 target_link_libraries(commandline Threads::Threads)
 if (${COMMANDLINE_PLATFORM_WINDOWS})
     target_compile_definitions(commandline PRIVATE -DPLATFORM_WINDOWS=1)
 elseif (${COMMANDLINE_PLATFORM_LINUX})
     target_compile_definitions(commandline PRIVATE -DPLATFORM_LINUX=1)
-endif()
-target_include_directories(commandline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+endif ()
+target_include_directories(commandline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 option(BUILD_EXAMPLES "Build example program" ON)
 
-if(BUILD_EXAMPLES)
-    add_executable(commandline_test main.cpp)
+if (BUILD_EXAMPLES)
+    add_executable(commandline_test src/main.cpp)
     target_link_libraries(commandline_test commandline)
     if (${COMMANDLINE_PLATFORM_WINDOWS})
         target_compile_definitions(commandline PRIVATE -DPLATFORM_WINDOWS=1)
     elseif (${COMMANDLINE_PLATFORM_LINUX})
         target_compile_definitions(commandline PRIVATE -DPLATFORM_LINUX=1)
-    endif()
+    endif ()
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT commandline_test)
-endif()
+endif ()
 

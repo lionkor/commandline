@@ -1,5 +1,7 @@
-#include <fstream>
 #include "commandline.h"
+#include <fstream>
+#include <mutex>
+#include <thread>
 
 int main(int argc, char** argv) {
     // Fake logging as an example
