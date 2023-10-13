@@ -1,6 +1,6 @@
-#ifndef COMMANDLINE_H__
-#define COMMANDLINE_H__
+#pragma once
 
+#include "Backend.h"
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -11,41 +11,34 @@
 #include <thread>
 #include <vector>
 
-class Commandline final {
-public:
-    explicit Commandline(const std::string& prompt = "");
-    Commandline(const Commandline&) = delete;
-    ~Commandline();
+namespace lk {
 
-    bool has_command() const;
-    void write(const std::string& str);
-    std::string get_command();
-    bool history_enabled() const { return m_history_enabled; }
-    void enable_history() { m_history_enabled = true; }
-    void disable_history() { m_history_enabled = false; }
-    void set_history_limit(size_t count);
-    size_t history_size() const;
-    void clear_history();
-    const std::vector<std::string>& history() const { return m_history; }
-    void set_history(const std::vector<std::string>& history) {
+class InteractiveBackend : public Backend {
+public:
+    explicit InteractiveBackend(const std::string& prompt = "");
+    InteractiveBackend(const InteractiveBackend&) = delete;
+    ~InteractiveBackend() override;
+
+    bool has_command() const override;
+    void write(const std::string& str) override;
+    std::string get_command() override;
+    bool history_enabled() const override { return m_history_enabled; }
+    void enable_history() override { m_history_enabled = true; }
+    void disable_history() override { m_history_enabled = false; }
+    void set_history_limit(size_t count) override;
+    size_t history_size() const override;
+    void clear_history() override;
+    const std::vector<std::string>& history() const override { return m_history; }
+    void set_history(const std::vector<std::string>& history) override {
         m_history = history;
         m_history_index = 0;
     }
-    void set_prompt(const std::string& p);
-    std::string prompt() const;
+    void set_prompt(const std::string& p) override;
+    std::string prompt() const override;
 
     // key_debug writes escape-sequenced keys to stderr
-    void enable_key_debug();
-    void disable_key_debug();
-
-    // gets called when a command is ready
-    std::function<void(Commandline&)> on_command { nullptr };
-
-    // gets called when tab is pressed and new suggestions are requested
-    std::function<std::vector<std::string>(Commandline&, std::string, int)> on_autocomplete { nullptr };
-
-    // gets called on write(), for writing to a file or similar secondary logging system
-    std::function<void(const std::string&)> on_write { nullptr };
+    void enable_key_debug() override;
+    void disable_key_debug() override;
 
 private:
     void io_thread_main();
@@ -94,4 +87,4 @@ private:
     std::string m_buffer_before_autocomplete;
 };
 
-#endif // COMMANDLINE_H
+}
