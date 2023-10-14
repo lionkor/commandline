@@ -33,7 +33,7 @@ void lk::InteractiveBackend::add_to_current_buffer(char c) {
 }
 
 void lk::InteractiveBackend::update_current_buffer_view() {
-    printf("\x1b[2K\x1b[0G%s%s\x1b[%zuG", m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+    printf("\x1b[2K\x1b[0G%s%s\x1b[%zuG", m_prompt.c_str(), current_view().c_str(), current_view_cursor_pos());
     fflush(stdout);
 }
 
@@ -299,7 +299,7 @@ void lk::InteractiveBackend::io_thread_main() {
             auto to_write = m_to_write.front();
             m_to_write.pop();
             std::lock_guard<std::mutex> guard2(m_current_buffer_mutex);
-            printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%zuG", to_write.c_str(), m_prompt.c_str(), m_current_buffer.c_str(), m_prompt.size() + m_cursor_pos + 1);
+            printf("\x1b[2K\x1b[0G%s\n%s%s\x1b[%zuG", to_write.c_str(), m_prompt.c_str(), current_view().c_str(), current_view_cursor_pos());
             fflush(stdout);
             if (on_write) {
                 on_write(to_write);
@@ -388,4 +388,45 @@ void lk::InteractiveBackend::enable_key_debug() {
 
 void lk::InteractiveBackend::disable_key_debug() {
     m_key_debug = false;
+}
+std::string lk::InteractiveBackend::current_view() {
+    std::string buffer = m_current_buffer;
+    const auto view = current_view_size();
+    auto end = view;
+    if (buffer.size() > view) {
+        std::string prefix = "";
+        std::string postfix = "";
+        if (current_view_offset() + view < buffer.size()) {
+            postfix = "\x1b[7m>\x1b[0m";
+        }
+        if (current_view_offset() + view > view) {
+            prefix = "\x1b[7m<\x1b[0m";
+        } else {
+            ++end;
+        }
+        buffer = prefix + buffer.substr(current_view_offset(), end) + postfix;
+    }
+    return buffer;
+}
+
+size_t lk::InteractiveBackend::current_view_cursor_pos() {
+    const auto view = current_view_size();
+    if (current_view_offset() + view > view) {
+        return m_cursor_pos + m_prompt.size() - current_view_offset() + 2;
+    } else {
+        return m_cursor_pos + m_prompt.size() - current_view_offset() + 1;
+    }
+}
+
+size_t lk::InteractiveBackend::current_view_offset() {
+    const auto view_size = current_view_size();
+    if (m_cursor_pos < view_size) {
+        return 0;
+    }
+    return m_cursor_pos - view_size;
+}
+size_t lk::InteractiveBackend::current_view_size() {
+    const auto w = impl::get_terminal_width() - m_prompt.size() - 1;
+    const auto view_size = w - 1;
+    return view_size;
 }

@@ -22,7 +22,10 @@ elseif (LINUX OR APPLE OR CYGWIN OR UNIX) # just check a bunch even if they may 
     set(COMMANDLINE_PLATFORM_LINUX 1)
 endif ()
 
-add_library(commandline src/impls.h windows_impl.cpp src/linux_impl.cpp
+add_library(commandline
+        src/impls.h
+        src/windows_impl.cpp
+        src/linux_impl.cpp
         src/backends/InteractiveBackend.cpp
         src/backends/InteractiveBackend.h
         src/backends/Backend.cpp

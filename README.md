@@ -33,6 +33,9 @@ int main() {
 - Asynchronous I/O:
 	The user can type into stdin while the program spams output onto stdout, with no visual issues. A command or message is committed with the Enter/Return key.
 
+- Scrolling input:
+	If the entered line is too long to fit on screen, it gets scrolled left / right.
+
 - Thread-safety:
 	All output is buffered internally and protected with mutexes, so `write()` can be called by many threads at the same time without issues. Performance-wise this makes little impact, in our testing, as compared to usual printf() or std::cout logging (it's much faster than the latter in common scenarios).
 
