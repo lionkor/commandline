@@ -390,32 +390,43 @@ void lk::InteractiveBackend::disable_key_debug() {
     m_key_debug = false;
 }
 std::string lk::InteractiveBackend::current_view() {
-    const auto w = impl::get_terminal_width();
-    const auto content_space = w - m_prompt.size();
     std::string buffer = m_current_buffer;
-    if (buffer.size() > content_space) {
-        buffer = "\x1b[7m<\x1b[0m" + buffer.substr(current_view_offset());
+    const auto view = current_view_size();
+    auto end = view;
+    if (buffer.size() > view) {
+        std::string prefix = "";
+        std::string postfix = "";
+        if (current_view_offset() + view < buffer.size()) {
+            postfix = "\x1b[7m>\x1b[0m";
+        }
+        if (current_view_offset() + view > view) {
+            prefix = "\x1b[7m<\x1b[0m";
+        } else {
+            ++end;
+        }
+        buffer = prefix + buffer.substr(current_view_offset(), end) + postfix;
     }
     return buffer;
 }
 
 size_t lk::InteractiveBackend::current_view_cursor_pos() {
-    const auto w = impl::get_terminal_width();
-    const auto content_space = w - m_prompt.size();
-    if (m_current_buffer.size() <= content_space) {
-        return m_cursor_pos + m_prompt.size() + 1;
+    const auto view = current_view_size();
+    if (current_view_offset() + view > view) {
+        return m_cursor_pos + m_prompt.size() - current_view_offset() + 2;
+    } else {
+        return m_cursor_pos + m_prompt.size() - current_view_offset() + 1;
     }
-    const auto view_size = current_view_size();
-    return m_cursor_pos + m_prompt.size() - current_view_offset() + 2;
 }
 
 size_t lk::InteractiveBackend::current_view_offset() {
     const auto view_size = current_view_size();
-    const auto cursor = (m_cursor_pos / view_size);
-    return m_current_buffer.size() - (view_size);
+    if (m_cursor_pos < view_size) {
+        return 0;
+    }
+    return m_cursor_pos - view_size;
 }
 size_t lk::InteractiveBackend::current_view_size() {
     const auto w = impl::get_terminal_width() - m_prompt.size() - 1;
-    const auto view_size = size_t(double(w) * 1) - 1;
+    const auto view_size = w - 1;
     return view_size;
 }
