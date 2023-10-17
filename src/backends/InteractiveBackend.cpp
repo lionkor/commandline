@@ -17,8 +17,7 @@ lk::InteractiveBackend::~InteractiveBackend() {
 }
 
 void lk::InteractiveBackend::set_prompt(const std::string& p) {
-    if (impl::is_interactive())
-        m_prompt = p;
+    m_prompt = p;
 }
 
 std::string lk::InteractiveBackend::prompt() const {
@@ -229,14 +228,8 @@ void lk::InteractiveBackend::handle_escape_sequence(std::unique_lock<std::mutex>
 
 void lk::InteractiveBackend::input_thread_main() {
     while (!m_shutdown.load()) {
-        if (!impl::is_interactive()) {
-            break;
-        }
         int c = 0;
         while (c != '\n' && c != '\r' && !m_shutdown.load()) {
-            if (!impl::is_interactive()) {
-                break;
-            }
             update_current_buffer_view();
             c = impl::getchar_no_echo();
             if (m_key_debug) {
@@ -288,10 +281,8 @@ void lk::InteractiveBackend::input_thread_main() {
 }
 
 void lk::InteractiveBackend::io_thread_main() {
-    if (impl::is_interactive()) {
-        std::thread input_thread(&lk::InteractiveBackend::input_thread_main, this);
-        input_thread.detach();
-    }
+    std::thread input_thread(&lk::InteractiveBackend::input_thread_main, this);
+    input_thread.detach();
     while (!m_shutdown.load()) {
         std::unique_lock<std::mutex> guard(m_to_write_mutex);
         m_to_write_cond.wait(guard, [&] { return !m_to_write.empty() || m_shutdown.load(); });
