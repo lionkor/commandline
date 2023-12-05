@@ -22,7 +22,12 @@ elseif (LINUX OR APPLE OR CYGWIN OR UNIX) # just check a bunch even if they may 
     set(COMMANDLINE_PLATFORM_LINUX 1)
 endif ()
 
+if (NOT DEFINED COMMANDLINE_LIBTYPE)
+    set(COMMANDLINE_LIBTYPE SHARED)
+endif ()
+
 add_library(commandline
+        ${COMMANDLINE_LIBTYPE}
         src/impls.h
         src/windows_impl.cpp
         src/linux_impl.cpp
