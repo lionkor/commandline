@@ -8,6 +8,9 @@ bool lk::BufferedBackend::has_command() const {
 void lk::BufferedBackend::write(const std::string& str) {
     std::lock_guard<std::mutex> lock(m_out_mtx);
     std::cout << str << std::endl;
+    if (on_write) {
+        on_write(str);
+    }
 }
 std::string lk::BufferedBackend::get_command() {
     std::lock_guard<std::mutex> lock(m_cmd_mtx);
@@ -73,6 +76,9 @@ void lk::BufferedBackend::thread_main() {
         {
             std::lock_guard<std::mutex> lock(m_cmd_mtx);
             m_input_queue.push_back(str);
+        }
+        if (on_command) {
+            on_command(*this);
         }
     }
 }
