@@ -4,9 +4,10 @@
 #include <array>
 #include <conio.h>
 #include <windows.h>
+#include <io.h>
 
 bool impl::is_interactive() {
-    return true;
+    return _isatty(_fileno(stdout)) || _isatty(_fileno(stdin));
 }
 
 void impl::init_terminal() {
