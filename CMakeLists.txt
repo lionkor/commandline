@@ -18,12 +18,13 @@ set(COMMANDLINE_PLATFORM_WINDOWS 0)
 
 if (WIN32)
     set(COMMANDLINE_PLATFORM_WINDOWS 1)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 elseif (LINUX OR APPLE OR CYGWIN OR UNIX) # just check a bunch even if they may repeat
     set(COMMANDLINE_PLATFORM_LINUX 1)
 endif ()
 
-if (NOT DEFINED COMMANDLINE_LIBTYPE)
-    set(COMMANDLINE_LIBTYPE SHARED)
+if (DEFINED COMMANDLINE_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS "${COMMANDLINE_SHARED_LIBS}")
 endif ()
 
 add_library(commandline
@@ -39,6 +40,9 @@ add_library(commandline
         src/commandline.cpp
         src/backends/BufferedBackend.cpp
         src/backends/BufferedBackend.h)
+
+add_library(commandline::commandline ALIAS commandline)
+
 target_link_libraries(commandline Threads::Threads)
 if (${COMMANDLINE_PLATFORM_WINDOWS})
     target_compile_definitions(commandline PRIVATE -DPLATFORM_WINDOWS=1)
@@ -51,11 +55,11 @@ option(BUILD_EXAMPLES "Build example program" ON)
 
 if (BUILD_EXAMPLES)
     add_executable(commandline_test src/main.cpp)
-    target_link_libraries(commandline_test commandline)
+    target_link_libraries(commandline_test PRIVATE commandline)
     if (${COMMANDLINE_PLATFORM_WINDOWS})
-        target_compile_definitions(commandline PRIVATE -DPLATFORM_WINDOWS=1)
+        target_compile_definitions(commandline_test PRIVATE -DPLATFORM_WINDOWS=1)
     elseif (${COMMANDLINE_PLATFORM_LINUX})
-        target_compile_definitions(commandline PRIVATE -DPLATFORM_LINUX=1)
+        target_compile_definitions(commandline_test PRIVATE -DPLATFORM_LINUX=1)
     endif ()
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT commandline_test)
 endif ()

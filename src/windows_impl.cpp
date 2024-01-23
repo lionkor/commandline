@@ -3,8 +3,9 @@
 #if defined(PLATFORM_WINDOWS) && PLATFORM_WINDOWS
 #include <array>
 #include <conio.h>
-#include <windows.h>
 #include <io.h>
+#include <stdio.h>
+#include <windows.h>
 
 bool impl::is_interactive() {
     return _isatty(_fileno(stdout)) || _isatty(_fileno(stdin));
@@ -35,7 +36,7 @@ bool impl::is_shift_pressed(bool forward) {
 
 int impl::get_terminal_width() {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int ret = GetConsoleScreenBufferInfo(GetStdHandle( STD_OUTPUT_HANDLE ),&csbi);
+    int ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     if (ret) {
         return csbi.dwSize.Y;
     } else {

@@ -20,15 +20,9 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCOMMANDLINE_LIBTYPE=SHARED
 
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
-      run: cmake --build . --config $BUILD_TYPE
-    
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: test.exe
-        path: ${{github.workspace}}/build/Release/test.exe
+      run: cmake --build . --parallel --config $BUILD_TYPE
