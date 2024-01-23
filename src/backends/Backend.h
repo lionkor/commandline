@@ -12,8 +12,16 @@ public:
     Backend(const Backend&) = delete;
     virtual ~Backend() = default;
 
+    /// Whether a line has been entered by the user.
     virtual bool has_command() const = 0;
+    /// Writes the given line to the output. This may be asynchronous,
+    /// i.e. it may return immediately and only *enqueue* the line to be
+    /// output at a later time.
     virtual void write(const std::string& str) = 0;
+    /// Returns a line the user entered. Usually non-blocking, so
+    /// `has_command` must return true before a call to this.
+    /// If there is nothing entered by the user yet, behavior is
+    /// implementation-defined (i.e. definitely check `has_command` first).
     virtual std::string get_command() = 0;
     virtual bool history_enabled() const = 0;
     virtual void enable_history() = 0;
