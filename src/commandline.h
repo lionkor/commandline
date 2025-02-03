@@ -25,6 +25,14 @@ public:
     void enable_key_debug() { m_backend->enable_key_debug(); }
     void disable_key_debug() { m_backend->disable_key_debug(); }
 
+    /// Enable the removal of ANSI escape codes from all writes before submitting them to the
+    /// on_write callback. For example, this can be used to remove color codes before getting the
+    /// string back through the on_write callback to be logged.
+    /// This is disabled by default.
+    void enable_ansi_escape_removal_on_write() { m_ansi_escape_removal = true; }
+    /// Opposite of enable_ansi_escape_for_write.
+    void disable_ansi_escape_removal_on_write() { m_ansi_escape_removal = false; }
+
     // gets called when a command is ready
     std::function<void(Commandline&)> on_command { nullptr };
 
@@ -36,4 +44,5 @@ public:
 
 private:
     std::unique_ptr<lk::Backend> m_backend;
+    bool m_ansi_escape_removal = false;
 };

@@ -27,9 +27,7 @@ if (DEFINED COMMANDLINE_SHARED_LIBS)
     set(BUILD_SHARED_LIBS "${COMMANDLINE_SHARED_LIBS}")
 endif ()
 
-add_library(commandline
-        ${COMMANDLINE_LIBTYPE}
-        src/impls.h
+set(COMMANDLINE_SRCS src/impls.h
         src/windows_impl.cpp
         src/linux_impl.cpp
         src/backends/InteractiveBackend.cpp
@@ -39,17 +37,24 @@ add_library(commandline
         src/commandline.h
         src/commandline.cpp
         src/backends/BufferedBackend.cpp
-        src/backends/BufferedBackend.h)
+        src/backends/BufferedBackend.h
+        src/helper/ansi.h
+        src/helper/ansi.cpp)
+
+add_library(commandline
+        ${COMMANDLINE_LIBTYPE}
+        ${COMMANDLINE_SRCS})
 
 add_library(commandline::commandline ALIAS commandline)
 
+target_compile_definitions(commandline PRIVATE -DDOCTEST_CONFIG_DISABLE=1)
 target_link_libraries(commandline Threads::Threads)
 if (${COMMANDLINE_PLATFORM_WINDOWS})
     target_compile_definitions(commandline PRIVATE -DPLATFORM_WINDOWS=1)
 elseif (${COMMANDLINE_PLATFORM_LINUX})
     target_compile_definitions(commandline PRIVATE -DPLATFORM_LINUX=1)
 endif ()
-target_include_directories(commandline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(commandline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 
 option(BUILD_EXAMPLES "Build example program" ON)
 
@@ -64,3 +69,14 @@ if (BUILD_EXAMPLES)
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT commandline_test)
 endif ()
 
+option(COMMANDLINE_TESTS "Build tests" ON)
+
+if (DEFINED COMMANDLINE_TESTS)
+    add_executable(commandline_tests tests/tests.cpp ${COMMANDLINE_SRCS})
+    target_include_directories(commandline_tests PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+    if (${COMMANDLINE_PLATFORM_WINDOWS})
+        target_compile_definitions(commandline_tests PRIVATE -DPLATFORM_WINDOWS=1)
+    elseif (${COMMANDLINE_PLATFORM_LINUX})
+        target_compile_definitions(commandline_tests PRIVATE -DPLATFORM_LINUX=1)
+    endif ()
+endif ()

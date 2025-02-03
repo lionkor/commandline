@@ -2,6 +2,7 @@
 
 #include "backends/BufferedBackend.h"
 #include "backends/InteractiveBackend.h"
+#include "helper/ansi.h"
 #include "impls.h"
 
 #include <memory>
@@ -20,7 +21,11 @@ Commandline::Commandline(const std::string& prompt) {
     };
     m_backend->on_write = [this](const std::string& str) {
         if (on_write) {
-            on_write(str);
+            if (m_ansi_escape_removal) {
+                on_write(ansi::remove_ansi_escape_codes(str));
+            } else {
+                on_write(str);
+            }
         }
     };
     m_backend->on_autocomplete = [this](lk::Backend&, std::string str, int n) {
