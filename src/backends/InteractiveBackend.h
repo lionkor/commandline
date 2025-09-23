@@ -48,6 +48,7 @@ private:
     void go_back_in_history();
     void go_forward_in_history();
     void add_to_current_buffer(char c);
+    void add_to_current_buffer_multibyte(char* c, size_t);
     void update_current_buffer_view();
     void handle_escape_sequence(std::unique_lock<std::mutex>& guard);
     void handle_backspace();
@@ -87,6 +88,7 @@ private:
     std::mutex m_current_buffer_mutex;
     std::string m_current_buffer;
     int m_cursor_pos = 0;
+    int m_cursor_pos_view = 0;
     std::vector<std::string> m_autocomplete_suggestions;
     size_t m_autocomplete_index = 0;
     std::string m_buffer_before_autocomplete;
