@@ -10,19 +10,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-          submodules: 'recursive'
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
+        submodules: recursive
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCOMMANDLINE_LIBTYPE=SHARED
+      run: cmake -S "${{ github.workspace }}" -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DCOMMANDLINE_LIBTYPE=SHARED
 
     - name: Build
-      working-directory: ${{github.workspace}}/build
       shell: bash
-      run: cmake --build . --parallel --config $BUILD_TYPE
+      run: cmake --build "${{ github.workspace }}/build" --parallel --config "${{ env.BUILD_TYPE }}"
