@@ -18,10 +18,8 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Configure CMake
+    - name: Build via script
       shell: bash
-      run: cmake -S "${{ github.workspace }}" -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DCOMMANDLINE_LIBTYPE=SHARED
+      run: bash scripts/cmake_build.sh
 
-    - name: Build
-      shell: bash
-      run: cmake --build "${{ github.workspace }}/build" --parallel --config "${{ env.BUILD_TYPE }}"
+
