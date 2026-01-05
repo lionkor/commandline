@@ -5,10 +5,10 @@ project(commandline)
 set(CMAKE_CXX_STANDARD 11)
 
 if (UNIX)
-    add_definitions(-Wall -Wextra -pedantic)
+    add_definitions(-Wall -Wextra -pedantic -Werror)
 endif (UNIX)
 if (MSVC)
-    add_definitions(/permissive-)
+    add_definitions(/permissive- /W3 /WX)
 endif (MSVC)
 
 include(FindThreads)
