@@ -58,7 +58,7 @@ int impl::get_terminal_width() {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     int ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     if (ret) {
-        return csbi.dwSize.Y;
+        return csbi.dwSize.X;
     } else {
         return 80; // some sane default
     }
