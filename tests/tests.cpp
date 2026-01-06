@@ -1,9 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
+#include "backends/BufferedBackend.h"
 #include "commandline.h"
 #include "helper/ansi.h"
-#include "backends/BufferedBackend.h"
 
 TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
     CHECK(ansi::remove_ansi_escape_codes("plain") == "plain");
@@ -31,12 +31,13 @@ TEST_CASE("Commandline on_write removes ANSI when enabled") {
 TEST_CASE("Commandline on_autocomplete forwards to user callback") {
     Commandline com;
     com.on_autocomplete = [](Commandline&, std::string stub, int) {
-        if (stub == "he") return std::vector<std::string>{"hello", "help"};
-        return std::vector<std::string>{};
+        if (stub == "he")
+            return std::vector<std::string> { "hello", "help" };
+        return std::vector<std::string> {};
     };
     // Invoke backend autocomplete via commandline plumbing
     // We cannot access backend directly; test using public callback:
-    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string>{};
+    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string> {};
     CHECK(results.size() == 2);
     CHECK(results[0] == "hello");
     CHECK(results[1] == "help");
@@ -67,6 +68,7 @@ TEST_CASE("BufferedBackend concurrent writes are serialized") {
     for (int i = 0; i < 10; ++i) {
         ts.emplace_back([&] { backend.write("x"); });
     }
-    for (auto& t : ts) t.join();
+    for (auto& t : ts)
+        t.join();
     CHECK(seen.size() == 10);
 }
