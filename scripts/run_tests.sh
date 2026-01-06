@@ -10,5 +10,7 @@ if [ ! -d "$BUILD_DIR" ]; then
   exit 1
 fi
 
+export COMMANDLINE_FORCE_BUFFERED=1
+
 cd "$BUILD_DIR"
-ctest --output-on-failure
+ctest --output-on-failure -C Release </dev/null
