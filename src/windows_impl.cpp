@@ -8,6 +8,14 @@
 #include <windows.h>
 
 bool impl::is_interactive() {
+    const char* force_buffered = std::getenv("COMMANDLINE_FORCE_BUFFERED");
+    if (force_buffered && *force_buffered == '1') {
+        return false;
+    }
+    const char* force_interactive = std::getenv("COMMANDLINE_FORCE_INTERACTIVE");
+    if (force_interactive && *force_interactive == '1') {
+        return true;
+    }
     return _isatty(_fileno(stdout)) || _isatty(_fileno(stdin));
 }
 
