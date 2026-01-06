@@ -113,6 +113,15 @@ while (is_running) {
 com.write("hello, world!");
 ```
 
+## Configuration
+
+Most of the configuration is done through methods on the `Commandline` class. However, some external factors are considered by the library:
+
+1. The ENV variables:
+    - `COMMANDLINE_FORCE_BUFFERED=1` forces the buffered interface, without history, autocomplete, etc. This essentially removes the point of the library so use only for CI/CD, automated testing, etc. or when running with a pseudo-TTY that doesn't work quite as expected.
+    - `COMMANDLINE_FORCE_INTERACTIVE=1` forces the interactive interface, with autocomplete, history, our own editing implementation, etc. However, please be aware that this may consume a lot of CPU if stdin or stdout are not actually TTYs. Use at your own risk.
+2. `stdin` and `stdout` are used to determine if the interface is interactive or not. This means that, in some cases, like when using this with GNU `screen`, the library might get confused. For those cases, refer to the ENV variables above.
+
 ## How to contribute?
 
 We roughly follow issue-driven development, as of v1.0.0. This means that any change you want to make should first be formulated in an issue. Then, it can be implemented on your own fork, and the issue referenced in the commit (like `fix #5`). Once PR'd and merged, it will automatically close the issue.
@@ -130,3 +139,5 @@ In most terminals and in Microsoft's CMD.exe (as well as standalone WinAPI conso
 ## Used In
 
 Commandline is used in https://github.com/BeamMP/BeamMP-Server!
+
+Using it in your project? Open an issue and we might add a link to it!
