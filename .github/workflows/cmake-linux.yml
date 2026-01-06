@@ -22,4 +22,6 @@ jobs:
       shell: bash
       run: bash scripts/cmake_build.sh
 
-
+    - name: Run tests
+      shell: bash
+      run: bash scripts/run_tests.sh

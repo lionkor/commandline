@@ -83,14 +83,13 @@ endif ()
 option(COMMANDLINE_TESTS "Build tests" ON)
 
 if (COMMANDLINE_TESTS)
-    add_executable(commandline_tests tests/tests.cpp ${COMMANDLINE_SRCS})
-    target_include_directories(commandline_tests
-        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
-        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests"
-    )
+    add_executable(commandline_tests tests/tests.cpp)
+    target_link_libraries(commandline_tests PRIVATE commandline)
     if (COMMANDLINE_PLATFORM_WINDOWS)
         target_compile_definitions(commandline_tests PRIVATE PLATFORM_WINDOWS=1)
     elseif (COMMANDLINE_PLATFORM_LINUX)
         target_compile_definitions(commandline_tests PRIVATE PLATFORM_LINUX=1)
     endif ()
+    enable_testing()
+    add_test(NAME commandline_tests COMMAND commandline_tests)
 endif ()
