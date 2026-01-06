@@ -1,6 +1,10 @@
 name: CMake-Linux
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 env:
   BUILD_TYPE: Release
@@ -10,19 +14,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-          submodules: 'recursive'
+        submodules: recursive
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-
-    - name: Configure CMake
+    - name: Build via script
       shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: bash scripts/cmake_build.sh
 
-    - name: Build
-      working-directory: ${{github.workspace}}/build
+    - name: Run tests
       shell: bash
-      run: cmake --build . --parallel --config $BUILD_TYPE
+      run: bash scripts/run_tests.sh

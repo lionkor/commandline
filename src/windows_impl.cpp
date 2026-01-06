@@ -8,6 +8,26 @@
 #include <windows.h>
 
 bool impl::is_interactive() {
+    char* force_buffered = nullptr;
+    size_t len = 0;
+    if (_dupenv_s(&force_buffered, &len, "COMMANDLINE_FORCE_BUFFERED") == 0 && force_buffered != nullptr) {
+        bool result = (*force_buffered == '1') ? false : true;
+        free(force_buffered);
+        if (!result) {
+            return false;
+        }
+    }
+
+    char* force_interactive = nullptr;
+    len = 0;
+    if (_dupenv_s(&force_interactive, &len, "COMMANDLINE_FORCE_INTERACTIVE") == 0 && force_interactive != nullptr) {
+        bool result = (*force_interactive == '1') ? true : false;
+        free(force_interactive);
+        if (result) {
+            return true;
+        }
+    }
+
     return _isatty(_fileno(stdout)) || _isatty(_fileno(stdin));
 }
 

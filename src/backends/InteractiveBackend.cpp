@@ -411,7 +411,7 @@ size_t lk::InteractiveBackend::current_view_cursor_pos() {
 
 size_t lk::InteractiveBackend::current_view_offset() {
     const auto view_size = current_view_size();
-    if (m_cursor_pos < view_size) {
+    if (static_cast<size_t>(m_cursor_pos) < view_size) {
         return 0;
     }
     return m_cursor_pos - view_size;

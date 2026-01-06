@@ -1,4 +1,5 @@
 #include "impls.h"
+#include <cstdlib>
 
 #if defined(PLATFORM_LINUX) && PLATFORM_LINUX
 #include <cstdio>
@@ -12,6 +13,14 @@
 static struct termios s_original_termios;
 
 bool impl::is_interactive() {
+    const char* force_buffered = std::getenv("COMMANDLINE_FORCE_BUFFERED");
+    if (force_buffered && *force_buffered == '1') {
+        return false;
+    }
+    const char* force_interactive = std::getenv("COMMANDLINE_FORCE_INTERACTIVE");
+    if (force_interactive && *force_interactive == '1') {
+        return true;
+    }
     return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
 }
 
