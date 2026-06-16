@@ -7,7 +7,7 @@ class Commandline final {
 public:
     explicit Commandline(const std::string& prompt = "");
     explicit Commandline(std::unique_ptr<lk::Backend> backend)
-        : m_backend(std::move(backend)) { }
+        : m_backend(std::move(backend)) { wire_callbacks(); }
 
     bool has_command() const { return m_backend->has_command(); }
     void write(const std::string& str) { m_backend->write(str); }
@@ -36,15 +36,17 @@ public:
     void disable_ansi_escape_removal_on_write() { m_ansi_escape_removal = false; }
 
     // gets called when a command is ready
-    std::function<void(Commandline&)> on_command { nullptr };
+    std::function<void(Commandline&)> on_command{nullptr};
 
     // gets called when tab is pressed and new suggestions are requested
-    std::function<std::vector<std::string>(Commandline&, std::string, int)> on_autocomplete { nullptr };
+    std::function<std::vector<std::string>(Commandline&, std::string, int)> on_autocomplete{nullptr};
 
     // gets called on write(), for writing to a file or similar secondary logging system
-    std::function<void(const std::string&)> on_write { nullptr };
+    std::function<void(const std::string&)> on_write{nullptr};
 
 private:
+    void wire_callbacks();
+
     std::unique_ptr<lk::Backend> m_backend;
     bool m_ansi_escape_removal = false;
 };

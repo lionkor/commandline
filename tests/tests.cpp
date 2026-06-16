@@ -2,8 +2,11 @@
 #include "doctest.h"
 
 #include "backends/BufferedBackend.h"
+#include "backends/InteractiveBackend.h"
 #include "commandline.h"
 #include "helper/ansi.h"
+
+#include <cstdlib>
 
 TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
     CHECK(ansi::remove_ansi_escape_codes("plain") == "plain");
@@ -11,7 +14,16 @@ TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
     CHECK(ansi::remove_ansi_escape_codes("\x1b[Aup\nx") == "up\nx");
 }
 
+static void force_buffered() {
+#ifdef _WIN32
+    _putenv("COMMANDLINE_FORCE_BUFFERED=1");
+#else
+    setenv("COMMANDLINE_FORCE_BUFFERED", "1", 1);
+#endif
+}
+
 TEST_CASE("Commandline on_write forwards without ANSI removal") {
+    force_buffered();
     Commandline com;
     std::string captured;
     com.on_write = [&](const std::string& s) { captured = s; };
@@ -20,6 +32,7 @@ TEST_CASE("Commandline on_write forwards without ANSI removal") {
 }
 
 TEST_CASE("Commandline on_write removes ANSI when enabled") {
+    force_buffered();
     Commandline com;
     com.enable_ansi_escape_removal_on_write();
     std::string captured;
@@ -28,16 +41,16 @@ TEST_CASE("Commandline on_write removes ANSI when enabled") {
     CHECK(captured == "abcdef");
 }
 
-TEST_CASE("Commandline on_autocomplete forwards to user callback") {
+TEST_CASE("Commandline on_autocomplete callback is callable") {
     Commandline com;
     com.on_autocomplete = [](Commandline&, std::string stub, int) {
         if (stub == "he")
-            return std::vector<std::string> { "hello", "help" };
-        return std::vector<std::string> {};
+            return std::vector<std::string>{"hello", "help"};
+        return std::vector<std::string>{};
     };
     // Invoke backend autocomplete via commandline plumbing
     // We cannot access backend directly; test using public callback:
-    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string> {};
+    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string>{};
     CHECK(results.size() == 2);
     CHECK(results[0] == "hello");
     CHECK(results[1] == "help");
@@ -71,4 +84,100 @@ TEST_CASE("BufferedBackend concurrent writes are serialized") {
     for (auto& t : ts)
         t.join();
     CHECK(seen.size() == 10);
+}
+
+// --- classify_csi_sequence tests ---
+
+struct CsiResult {
+    lk::CsiAction action;
+    int calls;
+};
+
+static CsiResult classify(int c3, int follow = -1) {
+    int calls = 0;
+    auto fn = [follow, &calls]() mutable -> int {
+        ++calls;
+        return follow;
+    };
+    return CsiResult{lk::classify_csi_sequence(c3, fn), calls};
+}
+
+TEST_CASE("classify_csi_sequence arrow keys") {
+    auto r = classify('A');
+    CHECK(r.action == lk::CsiAction::GoBack);
+    CHECK(r.calls == 0);
+    r = classify('B');
+    CHECK(r.action == lk::CsiAction::GoForward);
+    CHECK(r.calls == 0);
+    r = classify('D');
+    CHECK(r.action == lk::CsiAction::GoLeft);
+    CHECK(r.calls == 0);
+    r = classify('C');
+    CHECK(r.action == lk::CsiAction::GoRight);
+    CHECK(r.calls == 0);
+}
+
+TEST_CASE("classify_csi_sequence home key") {
+    // ESC[H (traditional)
+    auto r = classify(0x48);
+    CHECK(r.action == lk::CsiAction::GoHome);
+    CHECK(r.calls == 0);
+    // ESC[1~ (xterm variant)
+    r = classify(0x31, '~');
+    CHECK(r.action == lk::CsiAction::GoHome);
+    CHECK(r.calls == 1);
+    // ESC[1 with non-~ follow-up returns None
+    r = classify(0x31, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
+}
+
+TEST_CASE("classify_csi_sequence end key") {
+    // ESC[F (traditional)
+    auto r = classify(0x46);
+    CHECK(r.action == lk::CsiAction::GoEnd);
+    CHECK(r.calls == 0);
+    // ESC[4~ (xterm variant)
+    r = classify(0x34, '~');
+    CHECK(r.action == lk::CsiAction::GoEnd);
+    CHECK(r.calls == 1);
+    // ESC[4 with non-~ follow-up returns None
+    r = classify(0x34, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
+}
+
+TEST_CASE("classify_csi_sequence delete key") {
+    auto r = classify(0x33, '~');
+    CHECK(r.action == lk::CsiAction::Delete);
+    CHECK(r.calls == 1);
+    r = classify(0x33, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
+}
+
+TEST_CASE("classify_csi_sequence shift tab") {
+    auto r = classify(0x5a);
+    CHECK(r.action == lk::CsiAction::ShiftTab);
+    CHECK(r.calls == 0);
+}
+
+TEST_CASE("classify_csi_sequence unrecognized") {
+    auto r = classify('X');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 0);
+    r = classify('0');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 0);
+}
+
+// --- Commandline second-constructor test ---
+
+TEST_CASE("Commandline backend-ptr constructor wires callbacks") {
+    auto backend = std::unique_ptr<lk::Backend>(new lk::BufferedBackend(">"));
+    Commandline com(std::move(backend));
+    std::string captured;
+    com.on_write = [&](const std::string& s) { captured = s; };
+    com.write("hello");
+    CHECK(captured == "hello");
 }

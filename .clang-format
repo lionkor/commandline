@@ -1,5 +1,6 @@
-﻿---
+---
 BasedOnStyle: WebKit
 BreakBeforeBraces: Attach
 SpaceAfterTemplateKeyword: false
-...
+Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: false

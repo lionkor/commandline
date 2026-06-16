@@ -155,6 +155,39 @@ void lk::InteractiveBackend::handle_delete() {
     }
 }
 
+lk::CsiAction lk::classify_csi_sequence(int c3, const std::function<int()>& getchar_fn) {
+    switch (c3) {
+    case 'A':
+        return CsiAction::GoBack;
+    case 'B':
+        return CsiAction::GoForward;
+    case 'D':
+        return CsiAction::GoLeft;
+    case 'C':
+        return CsiAction::GoRight;
+    case 0x48: // ESC[H — Home
+        return CsiAction::GoHome;
+    case 0x31: // ESC[1~ — Home (xterm variant)
+        if (getchar_fn() == '~')
+            return CsiAction::GoHome;
+        return CsiAction::None;
+    case 0x46: // ESC[F — End
+        return CsiAction::GoEnd;
+    case 0x34: // ESC[4~ — End (xterm variant)
+        if (getchar_fn() == '~')
+            return CsiAction::GoEnd;
+        return CsiAction::None;
+    case 0x33: // ESC[3~ — Delete
+        if (getchar_fn() == '~')
+            return CsiAction::Delete;
+        return CsiAction::None;
+    case 0x5a: // ESC[Z — Shift+Tab
+        return CsiAction::ShiftTab;
+    default:
+        return CsiAction::None;
+    }
+}
+
 void lk::InteractiveBackend::handle_escape_sequence(std::unique_lock<std::mutex>& guard) {
     int c2 = impl::getchar_no_echo();
     if (m_key_debug) {
@@ -166,34 +199,37 @@ void lk::InteractiveBackend::handle_escape_sequence(std::unique_lock<std::mutex>
     if (m_key_debug) {
         fprintf(stderr, "c3: 0x%.2x\n", c3);
     }
-    if (c2 == '[' && history_enabled()) {
-        if (c3 == 'A') {
-            // up / back
-            go_back();
-        } else if (c3 == 'B') {
-            // down / forward
-            go_forward();
-        } else if (c3 == 'D') {
-            // left
+    if (c2 == '[') {
+        auto action = classify_csi_sequence(c3, impl::getchar_no_echo);
+        switch (action) {
+        case CsiAction::GoBack:
+            if (history_enabled())
+                go_back();
+            break;
+        case CsiAction::GoForward:
+            if (history_enabled())
+                go_forward();
+            break;
+        case CsiAction::GoLeft:
             go_left();
-        } else if (c3 == 'C') {
-            // right
+            break;
+        case CsiAction::GoRight:
             go_right();
-        } else if (c3 == 0x48 || c3 == 0x31) {
-            // HOME
+            break;
+        case CsiAction::GoHome:
             go_to_begin();
-        } else if (c3 == 0x46) {
-            // END
+            break;
+        case CsiAction::GoEnd:
             go_to_end();
-        } else if (c3 == 0x33) {
-            // DEL
-            int c4 = impl::getchar_no_echo();
-            if (c4 == '~') {
-                handle_delete();
-            }
-        } else if (c3 == 0x5a) {
-            // SHIFT+TAB
+            break;
+        case CsiAction::Delete:
+            handle_delete();
+            break;
+        case CsiAction::ShiftTab:
             handle_tab(guard, false);
+            break;
+        case CsiAction::None:
+            break;
         }
 #elif defined(WINDOWS)
     if (c2 == 'H') {

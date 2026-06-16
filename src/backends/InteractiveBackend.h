@@ -70,19 +70,19 @@ private:
     std::string m_prompt;
 
     std::thread m_io_thread;
-    std::atomic<bool> m_shutdown { false };
-    bool m_key_debug { false };
+    std::atomic<bool> m_shutdown{false};
+    bool m_key_debug{false};
 
     mutable std::mutex m_to_write_mutex;
     std::queue<std::string> m_to_write;
     std::condition_variable m_to_write_cond;
     mutable std::mutex m_to_read_mutex;
     std::queue<std::string> m_to_read;
-    bool m_history_enabled { false };
+    bool m_history_enabled{false};
     mutable std::mutex m_history_mutex;
     std::vector<std::string> m_history;
     std::string m_history_temp_buffer;
-    size_t m_history_index { 0 };
+    size_t m_history_index{0};
     size_t m_history_limit = (std::numeric_limits<size_t>::max)() - 1;
     std::mutex m_current_buffer_mutex;
     std::string m_current_buffer;
@@ -91,5 +91,22 @@ private:
     size_t m_autocomplete_index = 0;
     std::string m_buffer_before_autocomplete;
 };
+
+enum class CsiAction {
+    None,
+    GoBack,
+    GoForward,
+    GoLeft,
+    GoRight,
+    GoHome,
+    GoEnd,
+    Delete,
+    ShiftTab,
+};
+
+// Classify a CSI (ESC[...) escape sequence from its parameter byte c3.
+// Calls getchar_fn to read additional bytes for multi-byte sequences
+// such as ESC[1~ (Home), ESC[3~ (Delete), ESC[4~ (End).
+CsiAction classify_csi_sequence(int c3, const std::function<int()>& getchar_fn);
 
 }

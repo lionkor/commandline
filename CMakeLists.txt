@@ -53,6 +53,7 @@ if (COMMON_WARNINGS)
     target_compile_options(commandline PRIVATE ${COMMON_WARNINGS})
 endif ()
 
+
 target_compile_definitions(commandline PRIVATE DOCTEST_CONFIG_DISABLE=1)
 target_link_libraries(commandline PRIVATE Threads::Threads)
 

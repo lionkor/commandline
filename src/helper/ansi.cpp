@@ -7,7 +7,7 @@ enum class State {
 };
 
 std::string ansi::remove_ansi_escape_codes(const std::string& original) {
-    std::string new_str {};
+    std::string new_str{};
     new_str.reserve(original.size());
 
     State state = State::Normal;

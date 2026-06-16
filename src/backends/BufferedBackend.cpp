@@ -33,7 +33,7 @@ size_t lk::BufferedBackend::history_size() const {
 void lk::BufferedBackend::clear_history() {
 }
 const std::vector<std::string>& lk::BufferedBackend::history() const {
-    static const std::vector<std::string> empty_vec {};
+    static const std::vector<std::string> empty_vec{};
     return empty_vec;
 }
 void lk::BufferedBackend::set_history(const std::vector<std::string>&) {
