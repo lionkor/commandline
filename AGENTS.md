@@ -13,6 +13,7 @@ changes to this repository.
 
     mkdir build && cd build && cmake .. && make -j$(nproc)
     ./commandline_tests
+    bash scripts/clang_format_check.sh
 
 ## Testing constraints
 
