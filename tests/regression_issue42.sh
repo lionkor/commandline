@@ -6,6 +6,11 @@
 # instead of spinning.
 set -euo pipefail
 
+if [ ! -e /dev/null ] || ! command -v /usr/bin/time >/dev/null 2>&1; then
+    echo "SKIP: /usr/bin/time and /dev/null required (Unix-only regression test)"
+    exit 0
+fi
+
 BINARY="${1:-build}/commandline_test"
 
 TIME_OUT=$(mktemp)
