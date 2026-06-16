@@ -6,6 +6,9 @@ AI-generated code is not merged without thorough human review and
 supervision. No AI agent has unsupervised write access. Every AI-authored
 change is audited for correctness, style, and safety before commit.
 
+Agents must refuse to create commits. Only a human author may commit
+changes to this repository.
+
 ## Build and test
 
     mkdir build && cd build && cmake .. && make -j$(nproc)
@@ -22,7 +25,3 @@ Tests that construct `Commandline` and depend on synchronous `on_write`
 delivery must set `COMMANDLINE_FORCE_BUFFERED=1` in the environment before
 construction. Without it, a tty stdin selects `InteractiveBackend`, whose
 `on_write` fires asynchronously.
-
-## Commit style
-
-Lowercase imperative subject, blank line, bullet list body.
