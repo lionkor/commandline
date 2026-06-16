@@ -53,6 +53,7 @@ if (COMMON_WARNINGS)
     target_compile_options(commandline PRIVATE ${COMMON_WARNINGS})
 endif ()
 
+
 target_compile_definitions(commandline PRIVATE DOCTEST_CONFIG_DISABLE=1)
 target_link_libraries(commandline PRIVATE Threads::Threads)
 
@@ -83,7 +84,7 @@ endif ()
 option(COMMANDLINE_TESTS "Build tests" ON)
 
 if (COMMANDLINE_TESTS)
-    add_executable(commandline_tests tests/tests.cpp)
+    add_executable(commandline_tests tests/tests.cpp tests/interactive_backend_tests.cpp)
     target_link_libraries(commandline_tests PRIVATE commandline)
     if (COMMANDLINE_PLATFORM_WINDOWS)
         target_compile_definitions(commandline_tests PRIVATE PLATFORM_WINDOWS=1)
