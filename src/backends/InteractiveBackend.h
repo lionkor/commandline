@@ -92,4 +92,21 @@ private:
     std::string m_buffer_before_autocomplete;
 };
 
+enum class CsiAction {
+    None,
+    GoBack,
+    GoForward,
+    GoLeft,
+    GoRight,
+    GoHome,
+    GoEnd,
+    Delete,
+    ShiftTab,
+};
+
+// Classify a CSI (ESC[...) escape sequence from its parameter byte c3.
+// Calls getchar_fn to read additional bytes for multi-byte sequences
+// such as ESC[1~ (Home), ESC[3~ (Delete), ESC[4~ (End).
+CsiAction classify_csi_sequence(int c3, const std::function<int()>& getchar_fn);
+
 }

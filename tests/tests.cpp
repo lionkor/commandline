@@ -2,6 +2,7 @@
 #include "doctest.h"
 
 #include "backends/BufferedBackend.h"
+#include "backends/InteractiveBackend.h"
 #include "commandline.h"
 #include "helper/ansi.h"
 
@@ -40,7 +41,7 @@ TEST_CASE("Commandline on_write removes ANSI when enabled") {
     CHECK(captured == "abcdef");
 }
 
-TEST_CASE("Commandline on_autocomplete forwards to user callback") {
+TEST_CASE("Commandline on_autocomplete callback is callable") {
     Commandline com;
     com.on_autocomplete = [](Commandline&, std::string stub, int) {
         if (stub == "he")
@@ -83,4 +84,62 @@ TEST_CASE("BufferedBackend concurrent writes are serialized") {
     for (auto& t : ts)
         t.join();
     CHECK(seen.size() == 10);
+}
+
+// --- classify_csi_sequence tests ---
+
+static lk::CsiAction classify(int c3, int follow = -1) {
+    return lk::classify_csi_sequence(c3, [follow]() mutable -> int {
+        return follow;
+    });
+}
+
+TEST_CASE("classify_csi_sequence arrow keys") {
+    CHECK(classify('A') == lk::CsiAction::GoBack);
+    CHECK(classify('B') == lk::CsiAction::GoForward);
+    CHECK(classify('D') == lk::CsiAction::GoLeft);
+    CHECK(classify('C') == lk::CsiAction::GoRight);
+}
+
+TEST_CASE("classify_csi_sequence home key") {
+    // ESC[H (traditional)
+    CHECK(classify(0x48) == lk::CsiAction::GoHome);
+    // ESC[1~ (xterm variant)
+    CHECK(classify(0x31, '~') == lk::CsiAction::GoHome);
+    // ESC[1 with non-~ follow-up returns None
+    CHECK(classify(0x31, 'x') == lk::CsiAction::None);
+}
+
+TEST_CASE("classify_csi_sequence end key") {
+    // ESC[F (traditional)
+    CHECK(classify(0x46) == lk::CsiAction::GoEnd);
+    // ESC[4~ (xterm variant)
+    CHECK(classify(0x34, '~') == lk::CsiAction::GoEnd);
+    // ESC[4 with non-~ follow-up returns None
+    CHECK(classify(0x34, 'x') == lk::CsiAction::None);
+}
+
+TEST_CASE("classify_csi_sequence delete key") {
+    CHECK(classify(0x33, '~') == lk::CsiAction::Delete);
+    CHECK(classify(0x33, 'x') == lk::CsiAction::None);
+}
+
+TEST_CASE("classify_csi_sequence shift tab") {
+    CHECK(classify(0x5a) == lk::CsiAction::ShiftTab);
+}
+
+TEST_CASE("classify_csi_sequence unrecognized") {
+    CHECK(classify('X') == lk::CsiAction::None);
+    CHECK(classify('0') == lk::CsiAction::None);
+}
+
+// --- Commandline second-constructor test ---
+
+TEST_CASE("Commandline backend-ptr constructor wires callbacks") {
+    auto backend = std::unique_ptr<lk::Backend>(new lk::BufferedBackend(">"));
+    Commandline com(std::move(backend));
+    std::string captured;
+    com.on_write = [&](const std::string& s) { captured = s; };
+    com.write("hello");
+    CHECK(captured == "hello");
 }
