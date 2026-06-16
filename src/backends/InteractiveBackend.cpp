@@ -169,10 +169,12 @@ void lk::InteractiveBackend::handle_escape_sequence(std::unique_lock<std::mutex>
     if (c2 == '[') {
         if (c3 == 'A') {
             // up / back
-            if (history_enabled()) go_back();
+            if (history_enabled())
+                go_back();
         } else if (c3 == 'B') {
             // down / forward
-            if (history_enabled()) go_forward();
+            if (history_enabled())
+                go_forward();
         } else if (c3 == 'D') {
             // left
             go_left();
@@ -185,14 +187,16 @@ void lk::InteractiveBackend::handle_escape_sequence(std::unique_lock<std::mutex>
         } else if (c3 == 0x31) {
             // HOME (ESC[1~)
             int c4 = impl::getchar_no_echo();
-            if (c4 == '~') go_to_begin();
+            if (c4 == '~')
+                go_to_begin();
         } else if (c3 == 0x46) {
             // END (ESC[F)
             go_to_end();
         } else if (c3 == 0x34) {
             // END (ESC[4~)
             int c4 = impl::getchar_no_echo();
-            if (c4 == '~') go_to_end();
+            if (c4 == '~')
+                go_to_end();
         } else if (c3 == 0x33) {
             // DEL
             int c4 = impl::getchar_no_echo();

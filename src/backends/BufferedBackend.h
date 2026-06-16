@@ -32,12 +32,12 @@ public:
 private:
     void thread_main();
 
-    mutable std::mutex m_cmd_mtx {};
-    mutable std::mutex m_out_mtx {};
-    mutable std::mutex m_prompt_mtx {};
-    mutable std::mutex m_shutdown_mtx {};
+    mutable std::mutex m_cmd_mtx { };
+    mutable std::mutex m_out_mtx { };
+    mutable std::mutex m_prompt_mtx { };
+    mutable std::mutex m_shutdown_mtx { };
     bool m_shutdown = false;
-    std::deque<std::string> m_input_queue {};
+    std::deque<std::string> m_input_queue { };
     std::string m_prompt;
     std::thread m_thread;
 };

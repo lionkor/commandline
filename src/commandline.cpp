@@ -32,7 +32,7 @@ Commandline::Commandline(const std::string& prompt) {
         if (on_autocomplete) {
             return on_autocomplete(*this, std::move(str), n);
         } else {
-            return std::vector<std::string> {};
+            return std::vector<std::string> { };
         }
     };
 }

@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
         } else if (stub.empty()) {
             return { "a", "b", "c", "d" };
         } else {
-            return {};
+            return { };
         }
     };
 
