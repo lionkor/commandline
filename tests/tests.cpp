@@ -5,6 +5,8 @@
 #include "commandline.h"
 #include "helper/ansi.h"
 
+#include <cstdlib>
+
 TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
     CHECK(ansi::remove_ansi_escape_codes("plain") == "plain");
     CHECK(ansi::remove_ansi_escape_codes("\x1b[31mred\x1b[0m") == "red");
@@ -12,6 +14,7 @@ TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
 }
 
 TEST_CASE("Commandline on_write forwards without ANSI removal") {
+    setenv("COMMANDLINE_FORCE_BUFFERED", "1", 1);
     Commandline com;
     std::string captured;
     com.on_write = [&](const std::string& s) { captured = s; };
@@ -20,6 +23,7 @@ TEST_CASE("Commandline on_write forwards without ANSI removal") {
 }
 
 TEST_CASE("Commandline on_write removes ANSI when enabled") {
+    setenv("COMMANDLINE_FORCE_BUFFERED", "1", 1);
     Commandline com;
     com.enable_ansi_escape_removal_on_write();
     std::string captured;

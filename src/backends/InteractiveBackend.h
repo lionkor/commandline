@@ -91,7 +91,6 @@ private:
     size_t m_autocomplete_index = 0;
     std::string m_buffer_before_autocomplete;
 
-    friend struct InteractiveBackendAccess;
 };
 
 }

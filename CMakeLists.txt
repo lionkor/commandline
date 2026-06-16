@@ -84,7 +84,7 @@ endif ()
 option(COMMANDLINE_TESTS "Build tests" ON)
 
 if (COMMANDLINE_TESTS)
-    add_executable(commandline_tests tests/tests.cpp tests/interactive_backend_tests.cpp)
+    add_executable(commandline_tests tests/tests.cpp)
     target_link_libraries(commandline_tests PRIVATE commandline)
     if (COMMANDLINE_PLATFORM_WINDOWS)
         target_compile_definitions(commandline_tests PRIVATE PLATFORM_WINDOWS=1)

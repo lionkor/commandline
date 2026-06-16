@@ -8,12 +8,7 @@
 #include <memory>
 #include <utility>
 
-Commandline::Commandline(const std::string& prompt) {
-    if (impl::is_interactive()) {
-        m_backend = std::unique_ptr<lk::Backend>(new lk::InteractiveBackend(prompt));
-    } else {
-        m_backend = std::unique_ptr<lk::Backend>(new lk::BufferedBackend(prompt));
-    }
+void Commandline::wire_callbacks() {
     m_backend->on_command = [this](lk::Backend&) {
         if (on_command) {
             on_command(*this);
@@ -32,7 +27,16 @@ Commandline::Commandline(const std::string& prompt) {
         if (on_autocomplete) {
             return on_autocomplete(*this, std::move(str), n);
         } else {
-            return std::vector<std::string> { };
+            return std::vector<std::string>{};
         }
     };
+}
+
+Commandline::Commandline(const std::string& prompt) {
+    if (impl::is_interactive()) {
+        m_backend = std::unique_ptr<lk::Backend>(new lk::InteractiveBackend(prompt));
+    } else {
+        m_backend = std::unique_ptr<lk::Backend>(new lk::BufferedBackend(prompt));
+    }
+    wire_callbacks();
 }

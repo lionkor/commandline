@@ -7,7 +7,7 @@ class Commandline final {
 public:
     explicit Commandline(const std::string& prompt = "");
     explicit Commandline(std::unique_ptr<lk::Backend> backend)
-        : m_backend(std::move(backend)) { }
+        : m_backend(std::move(backend)) { wire_callbacks(); }
 
     bool has_command() const { return m_backend->has_command(); }
     void write(const std::string& str) { m_backend->write(str); }
@@ -45,6 +45,8 @@ public:
     std::function<void(const std::string&)> on_write { nullptr };
 
 private:
+    void wire_callbacks();
+
     std::unique_ptr<lk::Backend> m_backend;
     bool m_ansi_escape_removal = false;
 };
