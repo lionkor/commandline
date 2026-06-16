@@ -88,49 +88,87 @@ TEST_CASE("BufferedBackend concurrent writes are serialized") {
 
 // --- classify_csi_sequence tests ---
 
-static lk::CsiAction classify(int c3, int follow = -1) {
-    return lk::classify_csi_sequence(c3, [follow]() mutable -> int {
+struct CsiResult {
+    lk::CsiAction action;
+    int calls;
+};
+
+static CsiResult classify(int c3, int follow = -1) {
+    int calls = 0;
+    auto fn = [follow, &calls]() mutable -> int {
+        ++calls;
         return follow;
-    });
+    };
+    return CsiResult{lk::classify_csi_sequence(c3, fn), calls};
 }
 
 TEST_CASE("classify_csi_sequence arrow keys") {
-    CHECK(classify('A') == lk::CsiAction::GoBack);
-    CHECK(classify('B') == lk::CsiAction::GoForward);
-    CHECK(classify('D') == lk::CsiAction::GoLeft);
-    CHECK(classify('C') == lk::CsiAction::GoRight);
+    auto r = classify('A');
+    CHECK(r.action == lk::CsiAction::GoBack);
+    CHECK(r.calls == 0);
+    r = classify('B');
+    CHECK(r.action == lk::CsiAction::GoForward);
+    CHECK(r.calls == 0);
+    r = classify('D');
+    CHECK(r.action == lk::CsiAction::GoLeft);
+    CHECK(r.calls == 0);
+    r = classify('C');
+    CHECK(r.action == lk::CsiAction::GoRight);
+    CHECK(r.calls == 0);
 }
 
 TEST_CASE("classify_csi_sequence home key") {
     // ESC[H (traditional)
-    CHECK(classify(0x48) == lk::CsiAction::GoHome);
+    auto r = classify(0x48);
+    CHECK(r.action == lk::CsiAction::GoHome);
+    CHECK(r.calls == 0);
     // ESC[1~ (xterm variant)
-    CHECK(classify(0x31, '~') == lk::CsiAction::GoHome);
+    r = classify(0x31, '~');
+    CHECK(r.action == lk::CsiAction::GoHome);
+    CHECK(r.calls == 1);
     // ESC[1 with non-~ follow-up returns None
-    CHECK(classify(0x31, 'x') == lk::CsiAction::None);
+    r = classify(0x31, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
 }
 
 TEST_CASE("classify_csi_sequence end key") {
     // ESC[F (traditional)
-    CHECK(classify(0x46) == lk::CsiAction::GoEnd);
+    auto r = classify(0x46);
+    CHECK(r.action == lk::CsiAction::GoEnd);
+    CHECK(r.calls == 0);
     // ESC[4~ (xterm variant)
-    CHECK(classify(0x34, '~') == lk::CsiAction::GoEnd);
+    r = classify(0x34, '~');
+    CHECK(r.action == lk::CsiAction::GoEnd);
+    CHECK(r.calls == 1);
     // ESC[4 with non-~ follow-up returns None
-    CHECK(classify(0x34, 'x') == lk::CsiAction::None);
+    r = classify(0x34, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
 }
 
 TEST_CASE("classify_csi_sequence delete key") {
-    CHECK(classify(0x33, '~') == lk::CsiAction::Delete);
-    CHECK(classify(0x33, 'x') == lk::CsiAction::None);
+    auto r = classify(0x33, '~');
+    CHECK(r.action == lk::CsiAction::Delete);
+    CHECK(r.calls == 1);
+    r = classify(0x33, 'x');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 1);
 }
 
 TEST_CASE("classify_csi_sequence shift tab") {
-    CHECK(classify(0x5a) == lk::CsiAction::ShiftTab);
+    auto r = classify(0x5a);
+    CHECK(r.action == lk::CsiAction::ShiftTab);
+    CHECK(r.calls == 0);
 }
 
 TEST_CASE("classify_csi_sequence unrecognized") {
-    CHECK(classify('X') == lk::CsiAction::None);
-    CHECK(classify('0') == lk::CsiAction::None);
+    auto r = classify('X');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 0);
+    r = classify('0');
+    CHECK(r.action == lk::CsiAction::None);
+    CHECK(r.calls == 0);
 }
 
 // --- Commandline second-constructor test ---
