@@ -27,7 +27,7 @@ void Commandline::wire_callbacks() {
         if (on_autocomplete) {
             return on_autocomplete(*this, std::move(str), n);
         } else {
-            return std::vector<std::string>{};
+            return std::vector<std::string> { };
         }
     };
 }
