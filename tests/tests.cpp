@@ -44,12 +44,12 @@ TEST_CASE("Commandline on_autocomplete forwards to user callback") {
     Commandline com;
     com.on_autocomplete = [](Commandline&, std::string stub, int) {
         if (stub == "he")
-            return std::vector<std::string> { "hello", "help" };
-        return std::vector<std::string> { };
+            return std::vector<std::string>{"hello", "help"};
+        return std::vector<std::string>{};
     };
     // Invoke backend autocomplete via commandline plumbing
     // We cannot access backend directly; test using public callback:
-    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string> { };
+    auto results = com.on_autocomplete ? com.on_autocomplete(com, "he", 2) : std::vector<std::string>{};
     CHECK(results.size() == 2);
     CHECK(results[0] == "hello");
     CHECK(results[1] == "help");

@@ -18,11 +18,11 @@ int main(int argc, char** argv) {
 
     com.on_autocomplete = [](Commandline& com, std::string stub, int pos) -> std::vector<std::string> {
         if (stub == "hello") {
-            return { "hello world" };
+            return {"hello world"};
         } else if (stub.empty()) {
-            return { "a", "b", "c", "d" };
+            return {"a", "b", "c", "d"};
         } else {
-            return { };
+            return {};
         }
     };
 

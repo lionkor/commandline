@@ -31,13 +31,13 @@ public:
     virtual void disable_key_debug() = 0;
 
     // gets called when a command is ready
-    std::function<void(Backend&)> on_command { nullptr };
+    std::function<void(Backend&)> on_command{nullptr};
 
     // gets called when tab is pressed and new suggestions are requested
-    std::function<std::vector<std::string>(Backend&, std::string, int)> on_autocomplete { nullptr };
+    std::function<std::vector<std::string>(Backend&, std::string, int)> on_autocomplete{nullptr};
 
     // gets called on write(), for writing to a file or similar secondary logging system
-    std::function<void(const std::string&)> on_write { nullptr };
+    std::function<void(const std::string&)> on_write{nullptr};
 };
 
 }
