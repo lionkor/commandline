@@ -1,5 +1,7 @@
 #include "InteractiveBackend.h"
 
+#include <cstdio>
+
 #include "impls.h"
 
 lk::InteractiveBackend::InteractiveBackend(const std::string& prompt)
@@ -270,6 +272,10 @@ void lk::InteractiveBackend::input_thread_main() {
             c = impl::getchar_no_echo();
             if (m_key_debug) {
                 fprintf(stderr, "c: 0x%.2x\n", c);
+            }
+            if (c == EOF) {
+                m_shutdown.store(true);
+                break;
             }
             std::unique_lock<std::mutex> guard(m_current_buffer_mutex);
             if (c != '\t') {

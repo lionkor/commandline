@@ -93,4 +93,9 @@ if (COMMANDLINE_TESTS)
     endif ()
     enable_testing()
     add_test(NAME commandline_tests COMMAND commandline_tests)
+    if (UNIX)
+        add_test(NAME regression_issue42
+            COMMAND bash "${CMAKE_SOURCE_DIR}/tests/regression_issue42.sh" "${CMAKE_BINARY_DIR}"
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+    endif ()
 endif ()
