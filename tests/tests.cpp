@@ -13,8 +13,16 @@ TEST_CASE("ansi::remove_ansi_escape_codes removes escape sequences") {
     CHECK(ansi::remove_ansi_escape_codes("\x1b[Aup\nx") == "up\nx");
 }
 
-TEST_CASE("Commandline on_write forwards without ANSI removal") {
+static void force_buffered() {
+#ifdef _WIN32
+    _putenv("COMMANDLINE_FORCE_BUFFERED=1");
+#else
     setenv("COMMANDLINE_FORCE_BUFFERED", "1", 1);
+#endif
+}
+
+TEST_CASE("Commandline on_write forwards without ANSI removal") {
+    force_buffered();
     Commandline com;
     std::string captured;
     com.on_write = [&](const std::string& s) { captured = s; };
@@ -23,7 +31,7 @@ TEST_CASE("Commandline on_write forwards without ANSI removal") {
 }
 
 TEST_CASE("Commandline on_write removes ANSI when enabled") {
-    setenv("COMMANDLINE_FORCE_BUFFERED", "1", 1);
+    force_buffered();
     Commandline com;
     com.enable_ansi_escape_removal_on_write();
     std::string captured;
